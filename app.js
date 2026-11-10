@@ -330,8 +330,12 @@ async function recarregar(id) { if (id) revCache.delete(id); await carregarLista
 /* ---------- início ---------- */
 readHash(); render();
 (async () => {
-  if (!window.supabase || !CFG.supabaseUrl || !CFG.supabaseAnonKey || CFG.supabaseUrl.includes("COLE_AQUI")) {
+  if (!CFG.supabaseUrl || !CFG.supabaseAnonKey || CFG.supabaseUrl.includes("COLE_AQUI")) {
     $("rows").innerHTML = `<div class="empty"><strong>Site ainda não configurado</strong><span>Preencha o arquivo config.js com os dados do Supabase.</span></div>`;
+    return;
+  }
+  if (!window.supabase) {
+    $("rows").innerHTML = `<div class="empty"><strong>Não foi possível carregar o site</strong><span>Um componente não carregou. Recarregue a página; se continuar, desative bloqueadores de anúncio para este site.</span></div>`;
     return;
   }
   sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true } });

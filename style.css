@@ -212,3 +212,12 @@ img { max-width: 100%; }
 .foot p { margin: 0; color: var(--muted); font-size: 14px; max-width: 70ch; }
 .inapp { display: grid; gap: 8px; padding: 14px; border-radius: 10px; background: #fff6e5; border: 1px solid #f3d9a4; color: var(--ink); font-size: 14px; }
 .inapp .btn { justify-self: start; }
+.rev-acts { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
+.rev-acts .del { padding: 0; }
+.report { border: 0; background: none; padding: 0; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 2px; }
+.owner { margin: 0 22px 28px; padding: 16px; border: 1px dashed var(--line); border-radius: 10px; display: grid; gap: 6px; font-size: 14px; }
+.owner span { color: var(--muted); }
+.owner .btn { justify-self: start; margin-top: 4px; }
+.decl { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink); cursor: pointer; }
+.decl input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
+#pedidoDlg { width: min(480px, calc(100vw - 24px)); }

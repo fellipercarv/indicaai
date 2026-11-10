@@ -1,5 +1,6 @@
 /* Indicaí — front-end estático que conversa com o Supabase (banco, fotos e login com Google). */
 const CFG = window.INDICAI_CONFIG || {};
+const EMAIL_CONTATO = "fellipe_carv@hotmail.com";
 const ESPECIALIDADES = ["Ar-condicionado","Azulejista","Chaveiro","Eletricista","Encanador","Gesseiro","Impermeabilização","Jardinagem","Marcenaria","Marmoraria","Montador de móveis","Pedreiro","Pintor","Piso","Serralheria","Telhadista","Vidraçaria"];
 const NOTA_TXT = ["", "Péssimo", "Ruim", "Regular", "Bom", "Excelente"];
 const ICON = {
@@ -120,7 +121,7 @@ function revsHTML(revs) {
       <div class="rline">${starsHTML(r.nota)}<span>${quando(r.criado_em)}</span>${r.especialidade ? `<span>· ${esc(r.especialidade)}</span>` : ""}</div>
       <p>${esc(r.texto)}</p>
       ${(r.fotos || []).length ? `<div class="strip">${r.fotos.map(f => `<button type="button" data-img="${esc(fotoUrl(f))}"><img src="${esc(fotoUrl(f))}" alt="Foto do serviço" loading="lazy"></button>`).join("")}</div>` : ""}
-      ${mine ? `<button class="del" type="button" data-del="${esc(r.id)}">Excluir minha avaliação</button>` : ""}
+      <div class="rev-acts">${mine ? `<button class="del" type="button" data-del="${esc(r.id)}">Excluir minha avaliação</button>` : ""}<button class="report" type="button" data-report="${esc(r.id)}">Denunciar</button></div>
     </article>`;
   }).join("");
 }
@@ -179,7 +180,8 @@ function renderPanel() {
       <button class="act" type="button" data-copy="${esc(fmtTel(g.telefone))}"><span class="ic">${ICON.copy}</span>Copiar telefone</button>
     </div>
     <div class="tabs" role="tablist">${[["geral","Visão geral"],["avaliacoes","Avaliações"],["fotos","Fotos"]].map(([k,l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>
-    <div class="pane">${body}</div>`;
+    <div class="pane">${body}</div>
+    <div class="owner"><strong>É ${esc(g.nome.split(" ")[0])} ou trabalha com ${esc(g.nome.split(" ")[0])}?</strong><span>Peça a correção dos dados ou a remoção deste cadastro.</span><button class="btn" type="button" data-owner="${esc(g.id)}">Sou este profissional</button></div>`;
   p.scrollTop = keepScroll;
 }
 
@@ -190,7 +192,7 @@ function closeDetail() { selId = null; setHash(""); render(); }
 function readHash() { const h = location.hash.replace(/^#/, ""); if (h.includes("access_token=") || h.includes("error=")) return; selId = h.startsWith("f-") ? decodeURIComponent(h.slice(2)) : null; }
 window.addEventListener("hashchange", () => { readHash(); render(); });
 $("scrim").addEventListener("click", closeDetail);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selId && !$("dlg").open && !$("lightbox").open && !$("loginDlg").open) closeDetail(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selId && !$("dlg").open && !$("lightbox").open && !$("loginDlg").open && !$("pedidoDlg").open) closeDetail(); });
 
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button"); if (!t) return;
@@ -205,6 +207,8 @@ document.addEventListener("click", async (e) => {
   else if (ds.rsort) { revSort = ds.rsort; render(); }
   else if (ds.rate) openForm(lista.find(x => x.id === ds.rate));
   else if (ds.ask) openForm(lista.find(x => x.id === selId), +ds.ask);
+  else if (ds.report) abrirPedido("denuncia", { avaliacao: ds.report });
+  else if (ds.owner) abrirPedido("profissional", { fornecedor: ds.owner });
   else if (ds.img) { $("lbImg").src = ds.img; $("lightbox").showModal(); }
   else if (ds.copy) { try { await navigator.clipboard.writeText(ds.copy); toast("Telefone copiado"); } catch { toast(ds.copy); } }
   else if (ds.del) {
@@ -292,7 +296,8 @@ const ERROS = {
   login_necessario: "Entre com sua conta Google para publicar.",
   telefone_invalido: "Informe o telefone com DDD (10 ou 11 dígitos).",
   nome_invalido: "Use letras ou números no nome.",
-  foto_invalida: "Não foi possível anexar as fotos. Tente enviá-las de novo."
+  foto_invalida: "Não foi possível anexar as fotos. Tente enviá-las de novo.",
+  declaracao_necessaria: "Marque a declaração para publicar."
 };
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -305,6 +310,7 @@ $("form").addEventListener("submit", async (e) => {
   if (!esp || esp.length < 2) return err("Escolha a especialidade.");
   if (!nota) return err("Escolha uma nota de 1 a 5 estrelas.");
   if (texto.length < 5) return err("Escreva uma frase curta explicando a nota.");
+  if (!$("iDecl").checked) return err("Marque a declaração para publicar.");
   err(""); const btn = $("btnSave"); btn.disabled = true;
   const enviadas = [];
   try {
@@ -317,7 +323,7 @@ $("form").addEventListener("submit", async (e) => {
       enviadas.push(path);
     }
     btn.textContent = "Publicando…";
-    const { data: id, error } = await sb.rpc("adicionar_avaliacao", { p_nome: nome, p_telefone: tel, p_cidade: cidade, p_especialidade: esp, p_nota: nota, p_texto: texto, p_fotos: enviadas });
+    const { data: id, error } = await sb.rpc("adicionar_avaliacao", { p_nome: nome, p_telefone: tel, p_cidade: cidade, p_especialidade: esp, p_nota: nota, p_texto: texto, p_fotos: enviadas, p_declaracao: true });
     if (error) throw error;
     $("dlg").close(); toast("Avaliação publicada");
     await recarregar(id); selId = id; tab = "avaliacoes"; setHash("f-" + id); render();
@@ -329,6 +335,42 @@ $("form").addEventListener("submit", async (e) => {
       : msg === "foto_upload" ? "Não foi possível enviar as fotos. Use JPG ou PNG de até 5 MB."
       : "Não foi possível publicar agora. Tente de novo em instantes.");
   } finally { btn.disabled = false; btn.textContent = "Publicar avaliação"; }
+});
+
+/* ---------- pedidos de remoção/correção e denúncias ---------- */
+const MOTIVOS = {
+  denuncia: ["Avaliação falsa (não houve contratação)", "Conteúdo ofensivo", "Expõe dados pessoais de alguém", "Outro motivo"],
+  profissional: ["Quero remover meu cadastro", "Quero corrigir meus dados", "Este telefone não é meu / não sou prestador"]
+};
+let pedido = null;
+function abrirPedido(tipo, ref) {
+  if (!sb) return;
+  pedido = { tipo, ...ref };
+  const g = lista.find(x => x.id === (ref.fornecedor || selId));
+  $("pTitulo").textContent = tipo === "denuncia" ? "Denunciar avaliação" : "Sou este profissional";
+  $("pIntro").textContent = tipo === "denuncia"
+    ? "Conte o problema. Avaliações falsas, ofensivas ou com dados pessoais de terceiros são removidas."
+    : `Peça a remoção ou a correção do cadastro de ${g ? g.nome : "este profissional"}. Para confirmar que é você, entramos em contato pelo meio que informar abaixo.`;
+  $("pMotivo").innerHTML = MOTIVOS[tipo].map(m => `<option>${esc(m)}</option>`).join("");
+  $("pDetalhes").value = ""; $("pContato").value = ""; $("pErr").textContent = "";
+  $("pContatoLbl").textContent = tipo === "denuncia" ? "Seu e-mail ou WhatsApp (opcional)" : "Seu e-mail ou WhatsApp para retorno";
+  $("pEmail").textContent = EMAIL_CONTATO;
+  $("pedidoDlg").showModal();
+}
+$("pCancel").addEventListener("click", () => $("pedidoDlg").close());
+$("pedidoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const motivo = $("pMotivo").value, detalhes = $("pDetalhes").value.trim(), contato = $("pContato").value.trim();
+  if (pedido.tipo === "profissional" && contato.length < 6) { $("pErr").textContent = "Informe um e-mail ou WhatsApp para respondermos."; return; }
+  const tipo = pedido.tipo === "denuncia" ? "denuncia" : (motivo.startsWith("Quero corrigir") ? "correcao" : "remocao");
+  const btn = $("pEnviar"); btn.disabled = true;
+  const { error } = await sb.from("solicitacoes").insert({
+    tipo, motivo, detalhes: detalhes || null, contato: contato || null,
+    fornecedor_id: pedido.fornecedor || selId || null, avaliacao_id: pedido.avaliacao || null
+  });
+  btn.disabled = false;
+  if (error) { $("pErr").textContent = `Não foi possível enviar agora. Escreva para ${EMAIL_CONTATO}.`; return; }
+  $("pedidoDlg").close(); toast("Pedido recebido. Respondemos em até 15 dias.");
 });
 
 /* ---------- dados ---------- */

@@ -53,7 +53,7 @@ create policy "autor exclui a propria avaliacao" on public.avaliacoes for delete
 -- que valida os dados, cria ou atualiza o fornecedor e grava a avaliação de uma vez.
 create or replace function public.adicionar_avaliacao(
   p_nome text, p_telefone text, p_cidade text, p_especialidade text,
-  p_nota int, p_texto text, p_fotos text[] default '{}'
+  p_nota int, p_texto text, p_fotos text[] default '{}', p_declaracao boolean default false
 ) returns text
 language plpgsql security definer set search_path = public as $$
 declare
@@ -68,6 +68,7 @@ declare
   v_meta  jsonb;
 begin
   if v_uid is null then raise exception 'login_necessario'; end if;
+  if not coalesce(p_declaracao, false) then raise exception 'declaracao_necessaria'; end if;
   if char_length(v_tel) not between 10 and 11 then raise exception 'telefone_invalido'; end if;
   v_slug := trim(both '-' from regexp_replace(lower(unaccent_simples(v_nome)), '[^a-z0-9]+', '-', 'g'));
   if v_slug = '' then raise exception 'nome_invalido'; end if;
@@ -110,8 +111,29 @@ language sql immutable as $$
                       'AAAAAaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuCcNn')
 $$;
 
-revoke all on function public.adicionar_avaliacao(text, text, text, text, int, text, text[]) from public, anon;
-grant execute on function public.adicionar_avaliacao(text, text, text, text, int, text, text[]) to authenticated;
+revoke all on function public.adicionar_avaliacao(text, text, text, text, int, text, text[], boolean) from public, anon;
+grant execute on function public.adicionar_avaliacao(text, text, text, text, int, text, text[], boolean) to authenticated;
+
+-- ---------- Pedidos de remoção/correção e denúncias ----------
+-- Qualquer visitante pode enviar (o profissional pode não ter conta Google). Ninguém lê pelo site:
+-- os pedidos aparecem só para o dono, no Supabase (Table Editor > solicitacoes).
+create table if not exists public.solicitacoes (
+  id             uuid primary key default gen_random_uuid(),
+  tipo           text not null check (tipo in ('remocao', 'correcao', 'denuncia')),
+  fornecedor_id  text references public.fornecedores(id) on delete set null,
+  avaliacao_id   uuid references public.avaliacoes(id) on delete set null,
+  motivo         text not null check (char_length(motivo) between 2 and 80),
+  detalhes       text check (char_length(detalhes) <= 1000),
+  contato        text check (char_length(contato) <= 120),
+  status         text not null default 'novo' check (status in ('novo', 'em_analise', 'resolvido', 'recusado')),
+  criado_em      timestamptz not null default now(),
+  autor_id       uuid default auth.uid()
+);
+alter table public.solicitacoes enable row level security;
+drop policy if exists "qualquer um envia solicitacao" on public.solicitacoes;
+create policy "qualquer um envia solicitacao" on public.solicitacoes for insert to anon, authenticated
+  with check (status = 'novo' and (autor_id is null or autor_id = auth.uid()));
+grant insert on public.solicitacoes to anon, authenticated;
 
 -- ---------- Fotos (Storage) ----------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

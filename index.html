@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -150,6 +150,7 @@
       <input id="iFotos" type="file" accept="image/*" multiple>
       <div class="previews" id="previews"></div>
     </div>
+    <label class="decl"><input type="checkbox" id="iDecl"> <span>Declaro que contratei este profissional e que este é o telefone que ele usa para trabalhar. A avaliação conta a minha experiência real.</span></label>
     <div class="err" id="formErr" role="alert"></div>
     <div class="actions">
       <button class="btn" type="button" id="btnCancel">Cancelar</button>
@@ -174,16 +175,30 @@
   </div>
 </dialog>
 
+<dialog id="pedidoDlg">
+  <form class="dlg" id="pedidoForm" novalidate>
+    <h2 id="pTitulo">Denunciar avaliação</h2>
+    <p class="note" id="pIntro" style="margin:0"></p>
+    <div class="field"><label for="pMotivo">Motivo</label><select id="pMotivo"></select></div>
+    <div class="field"><label for="pDetalhes">Detalhes (opcional)</label><textarea id="pDetalhes" rows="3" maxlength="1000"></textarea></div>
+    <div class="field"><label for="pContato" id="pContatoLbl">Seu e-mail ou WhatsApp</label><input id="pContato" maxlength="120" autocomplete="email"></div>
+    <p class="hint" style="margin:0">Se preferir, escreva para <b id="pEmail"></b>.</p>
+    <div class="err" id="pErr" role="alert"></div>
+    <div class="actions"><button class="btn" type="button" id="pCancel">Cancelar</button><button class="btn primary" type="submit" id="pEnviar">Enviar pedido</button></div>
+  </form>
+</dialog>
+
 <footer class="foot">
   <div class="wrap">
     <a class="logo" href="./">indic<b>aí</b></a>
     <p>O Indicaí não cobra taxas e não intermedeia a contratação: você fala direto com o profissional. As avaliações são a opinião de quem contratou o serviço.</p>
+    <p>Contato, pedidos de remoção e denúncias: <b>fellipe_carv@hotmail.com</b></p>
     <p><a href="privacidade.html">Política de Privacidade</a></p>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="config.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

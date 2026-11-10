@@ -38,7 +38,7 @@ function quando(iso) {
 function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
 const COLORS = ["#0d7a66","#7a4cc2","#c2410c","#1d4ed8","#a21caf","#047857","#b45309","#be123c"];
 const colorFor = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-const initials = (n) => String(n || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+const initials = (n) => { const t = String(n || "?").trim(); if (/^(\p{L}\.){1,2}$/u.test(t)) return t.replace(/\./g, "").toUpperCase(); return t.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase(); };
 const ss = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
 
 /* ---------- estado ---------- */

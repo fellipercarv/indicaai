@@ -40,6 +40,9 @@ Site de avaliações de profissionais de obra. É um site estático (HTML, CSS e
    - 1 registro **CNAME** para `www`, apontando para `SEU-USUARIO.github.io`
 3. No GitHub, abra **Settings > Pages > Custom domain**, digite `indicai.com.br`, salve e marque **Enforce HTTPS** quando liberar (pode levar algumas horas).
 
+## Atualizações do banco
+Se o banco já foi criado com uma versão anterior do `schema.sql`, rode também, em ordem, os arquivos `supabase/migracao-*.sql`.
+
 ## Moderação
 Para apagar uma avaliação ofensiva ou falsa, abra no Supabase **Table Editor > avaliacoes** e exclua a linha. Para remover um fornecedor que pediu para sair do site, exclua-o em **fornecedores**; as avaliações dele são apagadas junto.
 

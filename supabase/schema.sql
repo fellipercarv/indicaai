@@ -76,13 +76,9 @@ begin
     raise exception 'foto_invalida';
   end if;
 
-  -- nome público do autor: primeiro nome + inicial do sobrenome
+  -- nome público do autor: só as iniciais (ex.: "Fellipe Carvalho" vira "F.C.")
   select raw_user_meta_data into v_meta from auth.users where id = v_uid;
-  v_autor := coalesce(v_meta->>'full_name', v_meta->>'name', 'Pessoa');
-  v_autor := split_part(v_autor, ' ', 1) ||
-             case when position(' ' in v_autor) > 0
-                  then ' ' || upper(left(split_part(v_autor, ' ', array_length(string_to_array(v_autor, ' '), 1)), 1)) || '.'
-                  else '' end;
+  v_autor := iniciais_autor(coalesce(v_meta->>'full_name', v_meta->>'name', ''));
 
   insert into fornecedores (id, nome, telefone, cidade, especialidades, criado_por)
   values (v_id, v_nome, v_tel, v_cid, array[v_esp], v_uid)
@@ -95,6 +91,17 @@ begin
   values (v_id, p_nota, btrim(p_texto), v_esp, coalesce(p_fotos, '{}'), v_uid, v_autor);
   return v_id;
 end $$;
+
+-- iniciais públicas de quem avalia: primeiro nome + último sobrenome ("Fellipe Carvalho" -> "F.C.")
+create or replace function public.iniciais_autor(nome text) returns text
+language sql immutable as $$
+  with p as (select regexp_split_to_array(btrim(coalesce(nome, '')), '\s+') as w)
+  select case
+    when btrim(coalesce(nome, '')) = '' then 'Anônimo'
+    when array_length(w, 1) = 1 then upper(left(w[1], 1)) || '.'
+    else upper(left(w[1], 1)) || '.' || upper(left(w[array_length(w, 1)], 1)) || '.'
+  end from p
+$$;
 
 -- remove acentos sem depender de extensão
 create or replace function public.unaccent_simples(t text) returns text

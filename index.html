@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -92,7 +92,7 @@
     </div>
     <form class="search" id="search" role="search">
       <div class="sf"><label for="fEsp">Serviço</label><select id="fEsp"><option value="">Todos</option></select></div>
-      <div class="sf"><label for="fCid">Cidade</label><select id="fCid"><option value="">Todas</option></select></div>
+      <div class="sf"><label for="fCid">Cidade</label><input id="fCid" type="search" placeholder="Digite a cidade" autocomplete="off" spellcheck="false"></div>
       <div class="sf"><label for="fNome">Nome</label><input id="fNome" type="search" placeholder="Ex.: Zé" autocomplete="off"></div>
       <div class="sf"><label for="fTel">Telefone</label><input id="fTel" type="search" inputmode="tel" placeholder="Ex.: 99532" autocomplete="off"></div>
       <button class="go" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</button>
@@ -136,7 +136,7 @@
     <p class="hint" id="matchHint"></p>
     <div class="two">
       <div class="field"><label for="iEsp">Especialidade</label><select id="iEsp" required></select></div>
-      <div class="field"><label for="iCid">Cidade</label><input id="iCid" maxlength="60" list="cidList" placeholder="Ex.: Campinas"><datalist id="cidList"></datalist></div>
+      <div class="field"><label for="iCid">Cidade</label><input id="iCid" maxlength="60" placeholder="Digite e escolha na lista" autocomplete="off" spellcheck="false"></div>
     </div>
     <div class="field" id="outraWrap" hidden><label for="iOutra">Qual especialidade?</label><input id="iOutra" maxlength="40"></div>
     <div class="field">
@@ -198,7 +198,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<script src="cidades.js?v=1"></script>
+<script src="config.js?v=9"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

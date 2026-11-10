@@ -45,6 +45,69 @@ const ss = { get(k) { try { return localStorage.getItem(k); } catch { return nul
 const ua = navigator.userAgent || "";
 const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|TikTok|musical_ly|Bytedance|LinkedInApp|Snapchat|Pinterest|; wv\)/i.test(ua);
 
+/* ---------- cidades (IBGE) e busca com sugestões ---------- */
+const CIDADES = String(window.CIDADES_BR || "").split(";").filter(Boolean).map(s => {
+  const [nome, uf] = s.split("|"); const label = `${nome} - ${uf}`;
+  return { label, nome, uf, n: norm(nome), nl: norm(label) };
+});
+const CID_POR_LABEL = new Map(CIDADES.map(c => [c.nl, c]));
+const semUF = (s) => String(s || "").replace(/\s*[-/]\s*[A-Za-z]{2}$/, "");
+// "Sao Paulo" -> "São Paulo - SP" quando o nome só existe em um estado
+function cidadeOficial(c) {
+  if (!c) return c;
+  const exata = CID_POR_LABEL.get(norm(c)); if (exata) return exata.label;
+  const mesmas = CIDADES.filter(x => x.n === norm(semUF(c)));
+  return mesmas.length === 1 ? mesmas[0].label : c;
+}
+function cidadeBate(cidadeFornecedor, filtro) {
+  const f = String(filtro || "").trim(); if (!f) return true;
+  if (!cidadeFornecedor) return false;
+  const temUF = /\s[-/]\s*[A-Za-z]{2}$/;
+  if (temUF.test(f) && temUF.test(cidadeFornecedor)) return norm(f) === norm(cidadeFornecedor);
+  return norm(semUF(cidadeFornecedor)).includes(norm(semUF(f)));
+}
+function buscarCidades(q, limite = 8) {
+  const n = norm(q); if (!n) return [];
+  const comeca = [], contem = [];
+  for (const c of CIDADES) {
+    if (c.n.startsWith(n) || c.nl.startsWith(n)) comeca.push(c);
+    else if (n.length >= 3 && c.n.includes(n)) contem.push(c);
+    if (comeca.length >= 60) break;
+  }
+  comeca.sort((a, b) => a.n.length - b.n.length || a.nome.localeCompare(b.nome, "pt-BR"));
+  return [...comeca, ...contem].slice(0, limite);
+}
+function autocomplete(input, fonte, aoEscolher) {
+  const box = document.createElement("ul");
+  box.className = "ac"; box.hidden = true; box.setAttribute("role", "listbox"); box.id = input.id + "-lista";
+  input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list"); input.setAttribute("aria-controls", box.id); input.setAttribute("aria-expanded", "false");
+  (input.closest("dialog") || document.body).appendChild(box);
+  let itens = [], idx = -1;
+  const posicionar = () => { const r = input.closest(".sf, .field").getBoundingClientRect(); box.style.left = r.left + "px"; box.style.top = (r.bottom + 4) + "px"; box.style.width = Math.max(r.width, 240) + "px"; };
+  const fechar = () => { box.hidden = true; idx = -1; input.setAttribute("aria-expanded", "false"); };
+  const marcar = () => box.querySelectorAll("li").forEach((li, i) => li.setAttribute("aria-selected", String(i === idx)));
+  const mostrar = () => {
+    itens = fonte(input.value);
+    if (!itens.length) { fechar(); return; }
+    box.innerHTML = itens.map((it, i) => `<li role="option" id="${box.id}-${i}" data-i="${i}" aria-selected="false">${esc(it.label)}${it.extra ? `<small>${esc(it.extra)}</small>` : ""}</li>`).join("");
+    posicionar(); box.hidden = false; idx = -1; input.setAttribute("aria-expanded", "true");
+  };
+  const escolher = (it) => { input.value = it.label; fechar(); aoEscolher && aoEscolher(it); };
+  input.addEventListener("input", mostrar);
+  input.addEventListener("focus", () => { if (input.value.trim()) mostrar(); });
+  input.addEventListener("blur", () => setTimeout(fechar, 120));
+  input.addEventListener("keydown", (e) => {
+    if (box.hidden) return;
+    if (e.key === "ArrowDown") { idx = Math.min(itens.length - 1, idx + 1); marcar(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { idx = Math.max(0, idx - 1); marcar(); e.preventDefault(); }
+    else if (e.key === "Enter" && idx >= 0) { e.preventDefault(); escolher(itens[idx]); }
+    else if (e.key === "Escape") { e.stopPropagation(); fechar(); }
+  });
+  box.addEventListener("mousedown", (e) => { const li = e.target.closest("li"); if (li) { e.preventDefault(); escolher(itens[+li.dataset.i]); } });
+  window.addEventListener("resize", () => { if (!box.hidden) posicionar(); });
+  window.addEventListener("scroll", () => { if (!box.hidden) posicionar(); }, true);
+}
+
 /* ---------- estado ---------- */
 let sb = null, sessao = null;
 let lista = [];                 // linhas de fornecedores_resumo
@@ -62,14 +125,13 @@ function render() {
   lista.forEach(g => { (g.especialidades || []).forEach(e => espCount.set(e, (espCount.get(e) || 0) + 1)); if (g.cidade) cidSet.add(g.cidade); });
   const espAll = [...new Set([...ESPECIALIDADES, ...espCount.keys()])].sort((a,b)=>a.localeCompare(b,"pt-BR"));
   fillSelect($("fEsp"), espAll, "Todos");
-  fillSelect($("fCid"), [...cidSet].sort((a,b)=>a.localeCompare(b,"pt-BR")), "Todas");
-  $("cidList").innerHTML = [...cidSet].map(c => `<option value="${esc(c)}">`).join("");
+  cidadesComFornecedor = [...cidSet];
   const fe = $("fEsp").value, fc = $("fCid").value, qn = norm($("fNome").value), qd = digits($("fTel").value);
   const catHTML = [...espCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
     .map(([e, n]) => `<button class="cat" type="button" data-cat="${esc(e)}" aria-pressed="${e === fe}">${esc(e)} <span>${n}</span></button>`).join("");
   if ($("cats").dataset.h !== catHTML) { $("cats").innerHTML = catHTML; $("cats").dataset.h = catHTML; }
 
-  let rows = lista.filter(g => (!fe || (g.especialidades || []).includes(fe)) && (!fc || g.cidade === fc) &&
+  let rows = lista.filter(g => (!fe || (g.especialidades || []).includes(fe)) && cidadeBate(g.cidade, fc) &&
     (!qn || norm(g.nome).includes(qn)) && (!qd || digits(g.telefone).includes(qd)));
   const m = sort.dir === "asc" ? 1 : -1;
   rows.sort((a, b) => {
@@ -221,7 +283,19 @@ document.addEventListener("click", async (e) => {
     toast("Avaliação excluída"); await recarregar(selId);
   }
 });
-["fEsp","fCid"].forEach(id => $(id).addEventListener("change", render));
+$("fEsp").addEventListener("change", render);
+$("fCid").addEventListener("input", render);
+let cidadesComFornecedor = [];
+// filtro: primeiro as cidades que já têm fornecedores (com a quantidade), depois as demais do Brasil
+autocomplete($("fCid"), (q) => {
+  const n = norm(semUF(q)); if (!n) return [];
+  const daLista = cidadesComFornecedor.filter(c => norm(semUF(c)).includes(n))
+    .map(c => ({ label: c, extra: plural(lista.filter(g => g.cidade === c).length, "fornecedor", "fornecedores") }));
+  const ja = new Set(daLista.map(x => norm(semUF(x.label))));
+  return [...daLista, ...buscarCidades(q).filter(c => !ja.has(c.n)).map(c => ({ label: c.label }))].slice(0, 8);
+}, render);
+// formulário: só cidades oficiais
+autocomplete($("iCid"), (q) => buscarCidades(q).map(c => ({ label: c.label })));
 ["fNome","fTel"].forEach(id => $(id).addEventListener("input", render));
 $("search").addEventListener("submit", (e) => { e.preventDefault(); render(); $("results").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
 $("sortSel").addEventListener("change", () => { const [k, dir] = $("sortSel").value.split(":"); sort = { k, dir }; render(); });
@@ -302,7 +376,8 @@ const ERROS = {
 };
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nome = $("iNome").value.trim().replace(/\s+/g, " "), tel = digits($("iTel").value), cidade = $("iCid").value.trim().replace(/\s+/g, " ");
+  const nome = $("iNome").value.trim().replace(/\s+/g, " "), tel = digits($("iTel").value), cidadeDigitada = $("iCid").value.trim().replace(/\s+/g, " ");
+  let cidade = cidadeDigitada;
   let esp = $("iEsp").value === "__outra" ? $("iOutra").value.trim() : $("iEsp").value; if (esp) esp = esp[0].toUpperCase() + esp.slice(1);
   const texto = $("iTxt").value.trim(); const err = (m) => { $("formErr").textContent = m; };
   if (!nome) return err("Informe o nome do fornecedor.");
@@ -312,6 +387,16 @@ $("form").addEventListener("submit", async (e) => {
   if (!nota) return err("Escolha uma nota de 1 a 5 estrelas.");
   if (texto.length < 5) return err("Escreva uma frase curta explicando a nota.");
   if (!$("iDecl").checked) return err("Marque a declaração para publicar.");
+  if (cidade) {
+    const exata = CID_POR_LABEL.get(norm(cidade));
+    if (exata) cidade = exata.label;
+    else {
+      const mesmas = CIDADES.filter(c => c.n === norm(semUF(cidade)));
+      if (mesmas.length === 1) cidade = mesmas[0].label;
+      else if (mesmas.length > 1) return err(`Existe "${semUF(cidade)}" em mais de um estado. Escolha a cidade na lista.`);
+      else return err("Cidade não encontrada. Digite e escolha uma cidade da lista.");
+    }
+  }
   err(""); const btn = $("btnSave"); btn.disabled = true;
   const enviadas = [];
   try {
@@ -378,7 +463,7 @@ $("pedidoForm").addEventListener("submit", async (e) => {
 async function carregarLista() {
   const { data, error } = await sb.from("fornecedores_resumo").select("*");
   if (error) { $("rows").innerHTML = `<div class="empty"><strong>Não foi possível carregar os fornecedores</strong><span>Verifique sua conexão e recarregue a página.</span></div>`; return; }
-  lista = data; carregado = true; render();
+  lista = data.map(g => ({ ...g, cidade: cidadeOficial(g.cidade) })); carregado = true; render();
 }
 async function recarregar(id) { if (id) revCache.delete(id); await carregarLista(); if (id) await carregarAvaliacoes(id, true); }
 

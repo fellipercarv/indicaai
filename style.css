@@ -221,3 +221,8 @@ img { max-width: 100%; }
 .decl { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink); cursor: pointer; }
 .decl input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
 #pedidoDlg { width: min(480px, calc(100vw - 24px)); }
+/* sugestões de cidade */
+.ac { position: fixed; z-index: 60; margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(15, 40, 33, .16); max-height: 300px; overflow-y: auto; }
+.ac li { padding: 9px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; color: var(--ink); }
+.ac li small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ac li:hover, .ac li[aria-selected="true"] { background: var(--brand-soft); }

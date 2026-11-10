@@ -177,6 +177,7 @@ function renderPanel() {
     <div class="acts">
       <button class="act main" type="button" data-rate="${esc(g.id)}"><span class="ic">${ICON.pen}</span>Avaliar</button>
       <a class="act" href="https://wa.me/55${digits(g.telefone)}" target="_blank" rel="noopener"><span class="ic">${ICON.chat}</span>WhatsApp</a>
+      <a class="act" href="tel:+55${digits(g.telefone)}" data-call><span class="ic">${ICON.phone}</span>Ligar</a>
       <button class="act" type="button" data-copy="${esc(fmtTel(g.telefone))}"><span class="ic">${ICON.copy}</span>Copiar telefone</button>
     </div>
     <div class="tabs" role="tablist">${[["geral","Visão geral"],["avaliacoes","Avaliações"],["fotos","Fotos"]].map(([k,l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>

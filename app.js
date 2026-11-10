@@ -39,7 +39,10 @@ function toast(msg) { const t = document.createElement("div"); t.className = "to
 const COLORS = ["#0d7a66","#7a4cc2","#c2410c","#1d4ed8","#a21caf","#047857","#b45309","#be123c"];
 const colorFor = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
 const initials = (n) => { const t = String(n || "?").trim(); if (/^(\p{L}\.){1,2}$/u.test(t)) return t.replace(/\./g, "").toUpperCase(); return t.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase(); };
-const ss = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
+const ss = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+// navegadores dentro de apps (Instagram, Facebook, TikTok, LinkedIn...) não permitem login com Google
+const ua = navigator.userAgent || "";
+const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|TikTok|musical_ly|Bytedance|LinkedInApp|Snapchat|Pinterest|; wv\)/i.test(ua);
 
 /* ---------- estado ---------- */
 let sb = null, sessao = null;
@@ -184,7 +187,7 @@ function renderPanel() {
 function setHash(h) { try { history.replaceState(null, "", location.pathname + location.search + (h ? "#" + h : "")); } catch {} }
 function openDetail(id) { selId = id; tab = "geral"; revSort = "recentes"; setHash("f-" + id); render(); $("panel").scrollTop = 0; }
 function closeDetail() { selId = null; setHash(""); render(); }
-function readHash() { const h = location.hash.replace(/^#/, ""); selId = h.startsWith("f-") ? decodeURIComponent(h.slice(2)) : null; }
+function readHash() { const h = location.hash.replace(/^#/, ""); if (h.includes("access_token=") || h.includes("error=")) return; selId = h.startsWith("f-") ? decodeURIComponent(h.slice(2)) : null; }
 window.addEventListener("hashchange", () => { readHash(); render(); });
 $("scrim").addEventListener("click", closeDetail);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selId && !$("dlg").open && !$("lightbox").open && !$("loginDlg").open) closeDetail(); });
@@ -225,11 +228,20 @@ function renderAuth() {
   const u = sessao?.user;
   const nome = u ? (u.user_metadata?.full_name || u.user_metadata?.name || u.email || "Você").split(" ")[0] : "";
   $("authBox").innerHTML = u ? `<span class="me">Olá, ${esc(nome)}</span><button class="btn ghost" type="button" id="btnSair">Sair</button>` : `<button class="btn ghost" type="button" id="btnEntrar">Entrar</button>`;
-  $("btnSair")?.addEventListener("click", async () => { await sb.auth.signOut(); toast("Você saiu"); });
-  $("btnEntrar")?.addEventListener("click", () => $("loginDlg").showModal());
+  $("btnSair")?.addEventListener("click", async () => { ss.set("indicai:pendente", null); await sb.auth.signOut({ scope: "local" }); sessao = null; renderAuth(); render(); toast("Você saiu do Indicaí"); });
+  $("btnEntrar")?.addEventListener("click", abrirLogin);
 }
+function abrirLogin() {
+  $("inAppNote").hidden = !inApp; $("btnGoogle").hidden = inApp;
+  $("loginDlg").showModal();
+}
+$("btnCopyLink").addEventListener("click", async () => {
+  const url = location.origin + location.pathname;
+  try { await navigator.clipboard.writeText(url); toast("Link copiado. Cole no Chrome ou Safari."); } catch { toast(url); }
+});
 async function entrarComGoogle() {
-  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+  // prompt=select_account: o Google sempre pergunta qual conta usar, em vez de entrar direto na última
+  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } });
   if (error) toast("Não foi possível abrir o login do Google");
 }
 $("btnGoogle").addEventListener("click", entrarComGoogle);
@@ -258,7 +270,7 @@ $("btnCancel").addEventListener("click", () => $("dlg").close());
 
 function openForm(f, n) {
   if (!sb) return;
-  if (!sessao) { ss.set("indicai:pendente", JSON.stringify({ id: f?.id || "", nota: n || 0 })); $("loginDlg").showModal(); return; }
+  if (!sessao) { ss.set("indicai:pendente", JSON.stringify({ id: f?.id || "", nota: n || 0 })); abrirLogin(); return; }
   $("form").reset(); setNota(n || 0); fotos = []; $("previews").innerHTML = ""; $("formErr").textContent = ""; $("outraWrap").hidden = true; $("matchHint").textContent = "";
   if (f) {
     $("iNome").value = f.nome; $("iTel").value = fmtTel(f.telefone); $("iCid").value = f.cidade || "";
@@ -338,11 +350,15 @@ readHash(); render();
     $("rows").innerHTML = `<div class="empty"><strong>Não foi possível carregar o site</strong><span>Um componente não carregou. Recarregue a página; se continuar, desative bloqueadores de anúncio para este site.</span></div>`;
     return;
   }
-  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true } });
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { flowType: "implicit", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
   const { data } = await sb.auth.getSession(); sessao = data.session; renderAuth();
   sb.auth.onAuthStateChange((_ev, s) => { sessao = s; renderAuth(); render(); });
-  // remove o ?code= do retorno do Google da barra de endereço
-  if (location.search.includes("code=")) { try { history.replaceState(null, "", location.pathname + location.hash); } catch {} }
+  // erro devolvido pelo Google/Supabase no retorno do login
+  const ret = new URLSearchParams(location.hash.slice(1) + "&" + location.search.slice(1));
+  if (ret.get("error")) {
+    toast("Não foi possível entrar: " + (ret.get("error_description") || ret.get("error")).replace(/\+/g, " "));
+    try { history.replaceState(null, "", location.pathname); } catch {}
+  }
   await carregarLista();
   const pend = ss.get("indicai:pendente");
   if (pend && sessao) { ss.set("indicai:pendente", null); try { const p = JSON.parse(pend); const f = lista.find(x => x.id === p.id); if (f) { selId = f.id; setHash("f-" + f.id); render(); } openForm(f, p.nota); } catch {} }

@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -164,6 +164,11 @@
   <div class="dlg">
     <h2>Entre para avaliar</h2>
     <p class="note" style="margin:0">Usamos sua conta Google só para confirmar que a avaliação é de uma pessoa real. No site aparecem só as suas iniciais (por exemplo, "F.C."): ninguém fica sabendo quem avaliou.</p>
+    <div class="inapp" id="inAppNote" hidden>
+      <strong>Abra no navegador para entrar</strong>
+      <span>O Google não permite login dentro do Instagram, Facebook e outros apps. Toque nos três pontinhos (⋮ ou …) e escolha <b>Abrir no navegador</b>, ou copie o link e cole no Chrome ou Safari.</span>
+      <button class="btn" type="button" id="btnCopyLink">Copiar link do site</button>
+    </div>
     <button class="btn primary" type="button" id="btnGoogle" style="justify-content:center;padding-block:12px">Entrar com Google</button>
     <div class="actions"><button class="btn" type="button" id="btnLoginCancel">Agora não</button></div>
   </div>
@@ -178,7 +183,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

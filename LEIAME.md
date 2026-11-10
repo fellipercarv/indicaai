@@ -37,7 +37,7 @@ Site de avaliações de profissionais de obra. É um site estático (HTML, CSS e
 1. Registre o domínio em https://registro.br (cerca de R$ 40 por ano; precisa de CPF ou CNPJ).
 2. No Registro.br, abra **DNS > Editar zona** e crie:
    - 4 registros **A** para `indicai.app.br`: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
-   - 1 registro **CNAME** para `www`, apontando para `SEU-USUARIO.github.io`
+   - 1 registro **CNAME** para `www`, apontando para `fellipercarv.github.io`
 3. O arquivo `CNAME` deste repositório já aponta o GitHub Pages para `indicai.app.br`. Em **Settings > Pages**, marque **Enforce HTTPS** quando liberar (pode levar algumas horas).
 
 ## Atualizações do banco

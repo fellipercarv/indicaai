@@ -25,20 +25,20 @@ Site de avaliações de profissionais de obra. É um site estático (HTML, CSS e
 2. Em "URIs de redirecionamento autorizados", coloque o endereço que o Supabase mostra em **Authentication > Providers > Google** (algo como `https://SEU-PROJETO.supabase.co/auth/v1/callback`).
 3. Cole o **Client ID** e o **Client Secret** do Google em **Authentication > Providers > Google** no Supabase e ative.
 4. Em **Authentication > URL Configuration**:
-   - **Site URL**: `https://indicai.com.br`
-   - **Redirect URLs**: `https://indicai.com.br/**` e o endereço do GitHub Pages (`https://SEU-USUARIO.github.io/indicai/**`)
+   - **Site URL**: `https://indicai.app.br`
+   - **Redirect URLs**: `https://indicai.app.br/**` e o endereço do GitHub Pages (`https://fellipercarv.github.io/indicaai/**`)
 
 ### 3. GitHub Pages (hospedagem)
 1. Suba os arquivos para o repositório `indicai` no GitHub.
 2. Abra **Settings > Pages > Source: Deploy from a branch**, escolha `main` e `/ (root)`.
-3. Em alguns minutos o site abre em `https://SEU-USUARIO.github.io/indicai/`.
+3. Em alguns minutos o site abre em `https://fellipercarv.github.io/indicaai/`.
 
-### 4. Domínio indicai.com.br
+### 4. Domínio indicai.app.br
 1. Registre o domínio em https://registro.br (cerca de R$ 40 por ano; precisa de CPF ou CNPJ).
 2. No Registro.br, abra **DNS > Editar zona** e crie:
-   - 4 registros **A** para `indicai.com.br`: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+   - 4 registros **A** para `indicai.app.br`: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
    - 1 registro **CNAME** para `www`, apontando para `SEU-USUARIO.github.io`
-3. No GitHub, abra **Settings > Pages > Custom domain**, digite `indicai.com.br`, salve e marque **Enforce HTTPS** quando liberar (pode levar algumas horas).
+3. O arquivo `CNAME` deste repositório já aponta o GitHub Pages para `indicai.app.br`. Em **Settings > Pages**, marque **Enforce HTTPS** quando liberar (pode levar algumas horas).
 
 ## Atualizações do banco
 Se o banco já foi criado com uma versão anterior do `schema.sql`, rode também, em ordem, os arquivos `supabase/migracao-*.sql`.

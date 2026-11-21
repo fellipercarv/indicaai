@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 
@@ -114,8 +114,8 @@
   <div class="list">
     <div class="lrow lhead">
       <button data-k="nome" type="button">Nome</button>
-      <button data-k="tel" type="button">Telefone</button>
       <button data-k="esp" type="button">Especialidade</button>
+      <span class="th">Telefone</span>
       <button data-k="aval" type="button" class="num">Avaliações</button>
       <button data-k="nota" type="button">Nota</button>
     </div>
@@ -135,10 +135,13 @@
     </div>
     <p class="hint" id="matchHint"></p>
     <div class="two">
-      <div class="field"><label for="iEsp">Especialidade</label><select id="iEsp" required></select></div>
       <div class="field"><label for="iCid">Cidade</label><input id="iCid" maxlength="60" placeholder="Digite e escolha na lista" autocomplete="off" spellcheck="false"></div>
     </div>
-    <div class="field" id="outraWrap" hidden><label for="iOutra">Qual especialidade?</label><input id="iOutra" maxlength="40"></div>
+    <div class="field">
+      <span class="flabel" id="espLbl">Especialidades <small>· marque tudo o que ele fez ou faz (até 5)</small></span>
+      <div class="esp-pick" id="espPick" role="group" aria-labelledby="espLbl"></div>
+      <div class="outra-row"><input id="iOutra" maxlength="40" placeholder="Outra especialidade" aria-label="Outra especialidade"><button class="btn" type="button" id="btnOutra">Adicionar</button></div>
+    </div>
     <div class="field">
       <label id="pickLbl">Sua nota</label>
       <div class="pick" id="pick" role="radiogroup" aria-labelledby="pickLbl"></div>
@@ -164,7 +167,7 @@
 <dialog id="loginDlg">
   <div class="dlg">
     <h2>Entre para avaliar</h2>
-    <p class="note" style="margin:0">Usamos sua conta Google só para confirmar que a avaliação é de uma pessoa real. No site aparecem só as suas iniciais (por exemplo, "F.C."): ninguém fica sabendo quem avaliou.</p>
+    <p class="note" style="margin:0">Usamos sua conta Google só para confirmar que a avaliação é de uma pessoa real. No site sua avaliação aparece como <b>Anônimo</b>: nem o profissional nem os visitantes ficam sabendo quem avaliou.</p>
     <div class="inapp" id="inAppNote" hidden>
       <strong>Abra no navegador para entrar</strong>
       <span>O Google não permite login dentro do Instagram, Facebook e outros apps. Toque nos três pontinhos (⋮ ou …) e escolha <b>Abrir no navegador</b>, ou copie o link e cole no Chrome ou Safari.</span>
@@ -199,7 +202,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script src="cidades.js?v=1"></script>
-<script src="config.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="config.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

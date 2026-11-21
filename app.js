@@ -11,7 +11,8 @@ const ICON = {
   copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
   chat: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/></svg>',
   pen: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
-  back: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>'
+  back: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  user: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
 };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -115,6 +116,7 @@ let carregado = false;
 const revCache = new Map();     // fornecedor_id -> avaliações
 let sort = { k: "nota", dir: "desc" };
 let selId = null, tab = "geral", revSort = "recentes";
+const telVisto = new Set();     // fornecedores cujo telefone a pessoa já revelou na lista
 
 const fotoUrl = (path) => sb.storage.from("fotos").getPublicUrl(path).data.publicUrl;
 const minhaId = () => sessao?.user?.id || null;
@@ -136,7 +138,6 @@ function render() {
   const m = sort.dir === "asc" ? 1 : -1;
   rows.sort((a, b) => {
     const v = sort.k === "nome" ? a.nome.localeCompare(b.nome, "pt-BR")
-      : sort.k === "tel" ? digits(a.telefone).localeCompare(digits(b.telefone))
       : sort.k === "esp" ? ((a.especialidades || [])[0] || "").localeCompare((b.especialidades || [])[0] || "", "pt-BR")
       : sort.k === "aval" ? (a.aval - b.aval) : ((a.nota - b.nota) || (a.aval - b.aval));
     return v * m || a.nome.localeCompare(b.nome, "pt-BR");
@@ -154,13 +155,13 @@ function render() {
   else if (!lista.length) box.innerHTML = `<div class="empty"><strong>Nenhum fornecedor avaliado ainda</strong><span>Conhece um bom gesseiro, encanador ou marceneiro? Seja o primeiro a indicar.</span><button class="btn primary" type="button" data-new>Avaliar fornecedor</button></div>`;
   else if (!rows.length) box.innerHTML = `<div class="empty"><strong>Nenhum fornecedor com esses filtros</strong><button class="btn" type="button" data-clear>Limpar filtros</button></div>`;
   else box.innerHTML = rows.map(g => `
-    <button class="lrow item${g.id === selId ? " sel" : ""}" type="button" data-id="${esc(g.id)}">
+    <div class="lrow item${g.id === selId ? " sel" : ""}" role="button" tabindex="0" data-id="${esc(g.id)}" aria-label="Ver ${esc(g.nome)}">
       <span class="c-n">${esc(g.nome)}</span>
-      <span class="c-t">${esc(fmtTel(g.telefone))}</span>
       <span class="c-e" title="${esc((g.especialidades || []).join(", "))}">${esc((g.especialidades || []).join(", "))}</span>
+      <span class="c-t">${telVisto.has(g.id) ? esc(fmtTel(g.telefone)) : `<button class="reveal" type="button" data-reveal="${esc(g.id)}">${ICON.phone}Clique para ver</button>`}</span>
       <span class="c-a">${g.aval}<span class="lbl"> ${g.aval === 1 ? "avaliação" : "avaliações"}</span></span>
       <span class="c-r"><b>${fmtNota(g.nota)}</b>${starsHTML(g.nota)}</span>
-    </button>`).join("");
+    </div>`).join("");
   renderPanel();
 }
 function fillSelect(sel, values, allLabel) {
@@ -170,6 +171,7 @@ function fillSelect(sel, values, allLabel) {
 }
 
 /* ---------- painel do fornecedor ---------- */
+const espsDe = (r) => ((r.especialidades && r.especialidades.length) ? r.especialidades : [r.especialidade]).filter(Boolean).join(", ");
 function revsHTML(revs) {
   const list = [...revs];
   if (revSort === "maior") list.sort((a, b) => b.nota - a.nota || String(b.criado_em).localeCompare(String(a.criado_em)));
@@ -178,9 +180,9 @@ function revsHTML(revs) {
   return list.map(r => {
     const mine = minhaId() && r.autor_id === minhaId();
     return `<article class="rev">
-      <div class="who"><div class="avatar" style="background:${colorFor(r.autor_id)}">${esc(initials(r.autor_nome))}</div>
-        <div><b>${esc(r.autor_nome)}</b><small>Avaliação no Indicaí</small></div></div>
-      <div class="rline">${starsHTML(r.nota)}<span>${quando(r.criado_em)}</span>${r.especialidade ? `<span>· ${esc(r.especialidade)}</span>` : ""}</div>
+      <div class="who"><div class="avatar anon" aria-hidden="true">${ICON.user}</div>
+        <div><b>Anônimo</b><small>${mine ? "Sua avaliação · só você vê esta marcação" : "Avaliação no Indicaí"}</small></div></div>
+      <div class="rline">${starsHTML(r.nota)}<span>${quando(r.criado_em)}</span>${espsDe(r) ? `<span>· ${esc(espsDe(r))}</span>` : ""}</div>
       <p>${esc(r.texto)}</p>
       ${(r.fotos || []).length ? `<div class="strip">${r.fotos.map(f => `<button type="button" data-img="${esc(fotoUrl(f))}"><img src="${esc(fotoUrl(f))}" alt="Foto do serviço" loading="lazy"></button>`).join("")}</div>` : ""}
       <div class="rev-acts">${mine ? `<button class="del" type="button" data-del="${esc(r.id)}">Excluir minha avaliação</button>` : ""}<button class="report" type="button" data-report="${esc(r.id)}">Denunciar</button></div>
@@ -191,7 +193,7 @@ function revsHTML(revs) {
 async function carregarAvaliacoes(id, force) {
   if (revCache.has(id) && !force) return;
   revCache.set(id, null);
-  const { data, error } = await sb.from("avaliacoes").select("id,fornecedor_id,nota,texto,especialidade,fotos,autor_id,autor_nome,criado_em").eq("fornecedor_id", id).order("criado_em", { ascending: false });
+  const { data, error } = await sb.from("avaliacoes").select("*").eq("fornecedor_id", id).order("criado_em", { ascending: false });
   revCache.set(id, error ? [] : data);
   if (selId === id) renderPanel();
 }
@@ -257,11 +259,17 @@ window.addEventListener("hashchange", () => { readHash(); render(); });
 $("scrim").addEventListener("click", closeDetail);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selId && !$("dlg").open && !$("lightbox").open && !$("loginDlg").open && !$("pedidoDlg").open) closeDetail(); });
 
+document.addEventListener("keydown", (e) => {
+  const row = e.target.closest?.(".item[data-id]");
+  if (row && e.target === row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDetail(row.dataset.id); }
+});
 document.addEventListener("click", async (e) => {
-  const t = e.target.closest("button"); if (!t) return;
+  const rev = e.target.closest("[data-reveal]");
+  if (rev) { telVisto.add(rev.dataset.reveal); render(); return; }
+  const t = e.target.closest("button");
+  if (!t) { const row = e.target.closest(".item[data-id]"); if (row) openDetail(row.dataset.id); return; }
   const ds = t.dataset;
-  if (ds.id) openDetail(ds.id);
-  else if (ds.k) { sort = { k: ds.k, dir: sort.k === ds.k ? (sort.dir === "asc" ? "desc" : "asc") : (["nome","tel","esp"].includes(ds.k) ? "asc" : "desc") }; render(); }
+  if (ds.k) { sort = { k: ds.k, dir: sort.k === ds.k ? (sort.dir === "asc" ? "desc" : "asc") : (["nome","esp"].includes(ds.k) ? "asc" : "desc") }; render(); }
   else if ("close" in ds) closeDetail();
   else if ("new" in ds) openForm();
   else if ("clear" in ds) { ["fEsp","fCid","fNome","fTel"].forEach(id => $(id).value = ""); render(); }
@@ -328,8 +336,29 @@ $("btnLoginCancel").addEventListener("click", () => { ss.set("indicai:pendente",
 
 /* ---------- formulário ---------- */
 let nota = 0, fotos = [];
-$("iEsp").innerHTML = `<option value="">Escolha…</option>` + ESPECIALIDADES.map(e => `<option>${e}</option>`).join("") + `<option value="__outra">Outra…</option>`;
-$("iEsp").addEventListener("change", () => { $("outraWrap").hidden = $("iEsp").value !== "__outra"; });
+const MAX_ESP = 5;
+let espEscolhidas = new Set(), espExtras = [];
+const capitalizar = (s) => { const t = String(s || "").trim().replace(/\s+/g, " "); return t ? t[0].toUpperCase() + t.slice(1) : t; };
+function renderEspPick() {
+  const todas = [...new Set([...espExtras, ...ESPECIALIDADES])];
+  $("espPick").innerHTML = todas.map(e => `<button type="button" class="esp-chip" data-esp="${esc(e)}" aria-pressed="${espEscolhidas.has(e)}">${espEscolhidas.has(e) ? "✓ " : ""}${esc(e)}</button>`).join("");
+}
+function alternarEsp(e) {
+  if (espEscolhidas.has(e)) espEscolhidas.delete(e);
+  else if (espEscolhidas.size >= MAX_ESP) { $("formErr").textContent = `Escolha no máximo ${MAX_ESP} especialidades.`; return; }
+  else espEscolhidas.add(e);
+  $("formErr").textContent = ""; renderEspPick();
+}
+$("espPick").addEventListener("click", (e) => { const b = e.target.closest("[data-esp]"); if (b) { e.stopPropagation(); alternarEsp(b.dataset.esp); } });
+function adicionarOutra() {
+  const v = capitalizar($("iOutra").value); if (v.length < 2) return;
+  const existente = [...espExtras, ...ESPECIALIDADES].find(x => norm(x) === norm(v));
+  const e = existente || v; if (!existente) espExtras.unshift(e);
+  if (!espEscolhidas.has(e)) alternarEsp(e); else renderEspPick();
+  $("iOutra").value = "";
+}
+$("btnOutra").addEventListener("click", (e) => { e.stopPropagation(); adicionarOutra(); });
+$("iOutra").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); adicionarOutra(); } });
 $("pick").innerHTML = [1,2,3,4,5].map(n => `<button type="button" role="radio" aria-checked="false" aria-label="${n} estrela${n>1?"s":""} – ${NOTA_TXT[n]}" data-n="${n}">★</button>`).join("");
 $("pick").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (b) { e.stopPropagation(); setNota(+b.dataset.n); } });
 function setNota(n) { nota = n; $("pick").querySelectorAll("button").forEach(b => { b.classList.toggle("on", +b.dataset.n <= n); b.setAttribute("aria-checked", String(+b.dataset.n === n)); }); $("pickTxt").textContent = n ? `${n} – ${NOTA_TXT[n]}` : "Toque nas estrelas"; }
@@ -350,12 +379,15 @@ $("btnCancel").addEventListener("click", () => $("dlg").close());
 function openForm(f, n) {
   if (!sb) return;
   if (!sessao) { ss.set("indicai:pendente", JSON.stringify({ id: f?.id || "", nota: n || 0 })); abrirLogin(); return; }
-  $("form").reset(); setNota(n || 0); fotos = []; $("previews").innerHTML = ""; $("formErr").textContent = ""; $("outraWrap").hidden = true; $("matchHint").textContent = "";
+  $("form").reset(); setNota(n || 0); fotos = []; $("previews").innerHTML = ""; $("formErr").textContent = ""; $("matchHint").textContent = "";
+  espEscolhidas = new Set(); espExtras = [];
   if (f) {
     $("iNome").value = f.nome; $("iTel").value = fmtTel(f.telefone); $("iCid").value = f.cidade || "";
-    const e = (f.especialidades || [])[0];
-    if (e) { if (ESPECIALIDADES.includes(e)) $("iEsp").value = e; else { $("iEsp").value = "__outra"; $("outraWrap").hidden = false; $("iOutra").value = e; } }
+    const esps = f.especialidades || [];
+    espExtras = esps.filter(e => !ESPECIALIDADES.includes(e));          // especialidades próprias do fornecedor aparecem primeiro
+    if (esps.length === 1) espEscolhidas.add(esps[0]);                  // com várias, a pessoa marca o que contratou
   }
+  renderEspPick();
   $("dlg").showModal();
   (f ? $("iTxt") : $("iNome")).focus();
 }
@@ -372,18 +404,20 @@ const ERROS = {
   telefone_invalido: "Informe o telefone com DDD (10 ou 11 dígitos).",
   nome_invalido: "Use letras ou números no nome.",
   foto_invalida: "Não foi possível anexar as fotos. Tente enviá-las de novo.",
-  declaracao_necessaria: "Marque a declaração para publicar."
+  declaracao_necessaria: "Marque a declaração para publicar.",
+  especialidade_invalida: "Marque de 1 a 5 especialidades."
 };
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const nome = $("iNome").value.trim().replace(/\s+/g, " "), tel = digits($("iTel").value), cidadeDigitada = $("iCid").value.trim().replace(/\s+/g, " ");
   let cidade = cidadeDigitada;
-  let esp = $("iEsp").value === "__outra" ? $("iOutra").value.trim() : $("iEsp").value; if (esp) esp = esp[0].toUpperCase() + esp.slice(1);
+  if ($("iOutra").value.trim()) adicionarOutra();                     // digitou e não clicou em "Adicionar"
+  const esps = [...espEscolhidas];
   const texto = $("iTxt").value.trim(); const err = (m) => { $("formErr").textContent = m; };
   if (!nome) return err("Informe o nome do fornecedor.");
   if (tel.length < 10) return err(ERROS.telefone_invalido);
   if (!slug(nome)) return err(ERROS.nome_invalido);
-  if (!esp || esp.length < 2) return err("Escolha a especialidade.");
+  if (!esps.length) return err("Marque pelo menos uma especialidade.");
   if (!nota) return err("Escolha uma nota de 1 a 5 estrelas.");
   if (texto.length < 5) return err("Escreva uma frase curta explicando a nota.");
   if (!$("iDecl").checked) return err("Marque a declaração para publicar.");
@@ -409,7 +443,7 @@ $("form").addEventListener("submit", async (e) => {
       enviadas.push(path);
     }
     btn.textContent = "Publicando…";
-    const { data: id, error } = await sb.rpc("adicionar_avaliacao", { p_nome: nome, p_telefone: tel, p_cidade: cidade, p_especialidade: esp, p_nota: nota, p_texto: texto, p_fotos: enviadas, p_declaracao: true });
+    const { data: id, error } = await sb.rpc("adicionar_avaliacao", { p_nome: nome, p_telefone: tel, p_cidade: cidade, p_especialidades: esps, p_nota: nota, p_texto: texto, p_fotos: enviadas, p_declaracao: true });
     if (error) throw error;
     $("dlg").close(); toast("Avaliação publicada");
     await recarregar(id); selId = id; tab = "avaliacoes"; setHash("f-" + id); render();

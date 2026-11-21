@@ -17,10 +17,11 @@ create table if not exists public.avaliacoes (
   fornecedor_id  text not null references public.fornecedores(id) on delete cascade,
   nota           smallint not null check (nota between 1 and 5),
   texto          text not null check (char_length(texto) between 5 and 600),
-  especialidade  text not null check (char_length(especialidade) between 2 and 40),
+  especialidade  text check (char_length(especialidade) between 2 and 40),   -- primeira especialidade (legado)
+  especialidades text[] not null default '{}' check (cardinality(especialidades) <= 5),
   fotos          text[] not null default '{}' check (cardinality(fotos) <= 5),
   autor_id       uuid not null references auth.users(id) on delete cascade,
-  autor_nome     text not null default 'Pessoa',
+  autor_nome     text not null default 'Anônimo',        -- quem avalia nunca é identificado no site
   criado_em      timestamptz not null default now(),
   unique (fornecedor_id, autor_id)                 -- uma avaliação por pessoa para cada fornecedor
 );
@@ -52,7 +53,7 @@ create policy "autor exclui a propria avaliacao" on public.avaliacoes for delete
 -- Ninguém grava direto nas tabelas: toda avaliação entra pela função abaixo,
 -- que valida os dados, cria ou atualiza o fornecedor e grava a avaliação de uma vez.
 create or replace function public.adicionar_avaliacao(
-  p_nome text, p_telefone text, p_cidade text, p_especialidade text,
+  p_nome text, p_telefone text, p_cidade text, p_especialidades text[],
   p_nota int, p_texto text, p_fotos text[] default '{}', p_declaracao boolean default false
 ) returns text
 language plpgsql security definer set search_path = public as $$
@@ -60,12 +61,10 @@ declare
   v_uid   uuid := auth.uid();
   v_tel   text := regexp_replace(coalesce(p_telefone, ''), '\D', '', 'g');
   v_nome  text := btrim(regexp_replace(coalesce(p_nome, ''), '\s+', ' ', 'g'));
-  v_esp   text := btrim(coalesce(p_especialidade, ''));
   v_cid   text := nullif(btrim(regexp_replace(coalesce(p_cidade, ''), '\s+', ' ', 'g')), '');
+  v_esps  text[];
   v_slug  text;
   v_id    text;
-  v_autor text;
-  v_meta  jsonb;
 begin
   if v_uid is null then raise exception 'login_necessario'; end if;
   if not coalesce(p_declaracao, false) then raise exception 'declaracao_necessaria'; end if;
@@ -73,36 +72,34 @@ begin
   v_slug := trim(both '-' from regexp_replace(lower(unaccent_simples(v_nome)), '[^a-z0-9]+', '-', 'g'));
   if v_slug = '' then raise exception 'nome_invalido'; end if;
   v_id := v_slug || '-' || v_tel;
+
+  -- especialidades: sem repetidas, sem vazias, de 1 a 5, cada uma com 2 a 40 letras
+  select coalesce(array_agg(e order by pos), '{}') into v_esps from (
+    select distinct on (lower(btrim(e))) btrim(e) as e, pos
+    from unnest(coalesce(p_especialidades, '{}')) with ordinality as t(e, pos)
+    where btrim(e) <> '' order by lower(btrim(e)), pos
+  ) x;
+  if cardinality(v_esps) not between 1 and 5
+     or exists (select 1 from unnest(v_esps) e where char_length(e) not between 2 and 40) then
+    raise exception 'especialidade_invalida';
+  end if;
+
   if exists (select 1 from unnest(coalesce(p_fotos, '{}')) f where f not like v_uid::text || '/%') then
     raise exception 'foto_invalida';
   end if;
 
-  -- nome público do autor: só as iniciais (ex.: "Fellipe Carvalho" vira "F.C.")
-  select raw_user_meta_data into v_meta from auth.users where id = v_uid;
-  v_autor := iniciais_autor(coalesce(v_meta->>'full_name', v_meta->>'name', ''));
-
   insert into fornecedores (id, nome, telefone, cidade, especialidades, criado_por)
-  values (v_id, v_nome, v_tel, v_cid, array[v_esp], v_uid)
+  values (v_id, v_nome, v_tel, v_cid, v_esps, v_uid)
   on conflict (id) do update
-    set especialidades = case when v_esp = any(fornecedores.especialidades) then fornecedores.especialidades
-                              else fornecedores.especialidades || v_esp end,
+    set especialidades = fornecedores.especialidades
+          || array(select e from unnest(excluded.especialidades) e where not e = any(fornecedores.especialidades)),
         cidade = coalesce(fornecedores.cidade, excluded.cidade);
 
-  insert into avaliacoes (fornecedor_id, nota, texto, especialidade, fotos, autor_id, autor_nome)
-  values (v_id, p_nota, btrim(p_texto), v_esp, coalesce(p_fotos, '{}'), v_uid, v_autor);
+  -- quem avalia aparece sempre como "Anônimo"
+  insert into avaliacoes (fornecedor_id, nota, texto, especialidade, especialidades, fotos, autor_id, autor_nome)
+  values (v_id, p_nota, btrim(p_texto), v_esps[1], v_esps, coalesce(p_fotos, '{}'), v_uid, 'Anônimo');
   return v_id;
 end $$;
-
--- iniciais públicas de quem avalia: primeiro nome + último sobrenome ("Fellipe Carvalho" -> "F.C.")
-create or replace function public.iniciais_autor(nome text) returns text
-language sql immutable as $$
-  with p as (select regexp_split_to_array(btrim(coalesce(nome, '')), '\s+') as w)
-  select case
-    when btrim(coalesce(nome, '')) = '' then 'Anônimo'
-    when array_length(w, 1) = 1 then upper(left(w[1], 1)) || '.'
-    else upper(left(w[1], 1)) || '.' || upper(left(w[array_length(w, 1)], 1)) || '.'
-  end from p
-$$;
 
 -- remove acentos sem depender de extensão
 create or replace function public.unaccent_simples(t text) returns text
@@ -111,8 +108,8 @@ language sql immutable as $$
                       'AAAAAaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuCcNn')
 $$;
 
-revoke all on function public.adicionar_avaliacao(text, text, text, text, int, text, text[], boolean) from public, anon;
-grant execute on function public.adicionar_avaliacao(text, text, text, text, int, text, text[], boolean) to authenticated;
+revoke all on function public.adicionar_avaliacao(text, text, text, text[], int, text, text[], boolean) from public, anon;
+grant execute on function public.adicionar_avaliacao(text, text, text, text[], int, text, text[], boolean) to authenticated;
 
 -- ---------- Pedidos de remoção/correção e denúncias ----------
 -- Qualquer visitante pode enviar (o profissional pode não ter conta Google). Ninguém lê pelo site:

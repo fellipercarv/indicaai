@@ -112,6 +112,17 @@ function autocomplete(input, fonte, aoEscolher) {
   window.addEventListener("scroll", () => { if (!box.hidden) posicionar(); }, true);
 }
 
+/* ---------- estatísticas (Umami) ----------
+   Registra ações que importam (abrir ficha, WhatsApp, ligar...). Só dados públicos do fornecedor,
+   nunca o telefone nem dados de quem visita. Se o Umami estiver bloqueado, nada acontece. */
+function registrar(evento, dados) {
+  try { if (window.umami && typeof window.umami.track === "function") window.umami.track(evento, dados); } catch {}
+}
+const dadosFornecedor = (id) => {
+  const g = lista.find(x => x.id === id); if (!g) return {};
+  return { fornecedor: g.nome, especialidade: (g.especialidades || [])[0] || "", cidade: g.cidade || "" };
+};
+
 /* ---------- estado ---------- */
 let sb = null, sessao = null;
 let lista = [];                 // linhas de fornecedores_resumo
@@ -244,9 +255,9 @@ function renderPanel() {
       <div class="meta">${esc(esps)}${g.cidade ? " · " + esc(g.cidade) : ""}</div></div>
     <div class="acts">
       <button class="act main" type="button" data-rate="${esc(g.id)}"><span class="ic">${ICON.pen}</span>Avaliar</button>
-      <a class="act" href="https://wa.me/55${digits(g.telefone)}" target="_blank" rel="noopener"><span class="ic">${ICON.chat}</span>WhatsApp</a>
-      <a class="act" href="tel:+55${digits(g.telefone)}" data-call><span class="ic">${ICON.phone}</span>Ligar</a>
-      <button class="act" type="button" data-copy="${esc(fmtTel(g.telefone))}"><span class="ic">${ICON.copy}</span>Copiar telefone</button>
+      <a class="act" href="https://wa.me/55${digits(g.telefone)}" target="_blank" rel="noopener" data-ev="whatsapp"><span class="ic">${ICON.chat}</span>WhatsApp</a>
+      <a class="act" href="tel:+55${digits(g.telefone)}" data-ev="ligar"><span class="ic">${ICON.phone}</span>Ligar</a>
+      <button class="act" type="button" data-copy="${esc(fmtTel(g.telefone))}" data-ev="copiar_telefone"><span class="ic">${ICON.copy}</span>Copiar telefone</button>
     </div>
     <div class="tabs" role="tablist">${[["geral","Visão geral"],["avaliacoes","Avaliações"],["fotos","Fotos"]].map(([k,l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>
     <div class="pane">${body}</div>
@@ -256,7 +267,7 @@ function renderPanel() {
 
 /* ---------- navegação ---------- */
 function setHash(h) { try { history.replaceState(null, "", location.pathname + location.search + (h ? "#" + h : "")); } catch {} }
-function openDetail(id) { selId = id; tab = "geral"; revSort = "recentes"; setHash("f-" + id); render(); $("panel").scrollTop = 0; }
+function openDetail(id) { registrar("abrir_ficha", dadosFornecedor(id)); selId = id; tab = "geral"; revSort = "recentes"; setHash("f-" + id); render(); $("panel").scrollTop = 0; }
 function closeDetail() { selId = null; setHash(""); render(); }
 function readHash() { const h = location.hash.replace(/^#/, ""); if (h.includes("access_token=") || h.includes("error=")) return; selId = h.startsWith("f-") ? decodeURIComponent(h.slice(2)) : null; }
 window.addEventListener("hashchange", () => { readHash(); render(); });
@@ -269,7 +280,9 @@ document.addEventListener("keydown", (e) => {
 });
 document.addEventListener("click", async (e) => {
   const rev = e.target.closest("[data-reveal]");
-  if (rev) { telVisto.add(rev.dataset.reveal); render(); return; }
+  if (rev) { telVisto.add(rev.dataset.reveal); registrar("ver_telefone_lista", dadosFornecedor(rev.dataset.reveal)); render(); return; }
+  const ev = e.target.closest("[data-ev]");
+  if (ev) registrar(ev.dataset.ev, dadosFornecedor(selId));
   const t = e.target.closest("button");
   if (!t) { const row = e.target.closest(".item[data-id]"); if (row) openDetail(row.dataset.id); return; }
   const ds = t.dataset;
@@ -277,7 +290,7 @@ document.addEventListener("click", async (e) => {
   else if ("close" in ds) closeDetail();
   else if ("new" in ds) openForm();
   else if ("clear" in ds) { ["fEsp","fLocal"].forEach(id => $(id).value = ""); render(); }
-  else if (ds.cat !== undefined) { $("fEsp").value = $("fEsp").value === ds.cat ? "" : ds.cat; render(); }
+  else if (ds.cat !== undefined) { $("fEsp").value = $("fEsp").value === ds.cat ? "" : ds.cat; if ($("fEsp").value) registrar("filtro_servico", { servico: ds.cat, origem: "etiqueta" }); render(); }
   else if (ds.tab) { tab = ds.tab; render(); $("panel").querySelector(".tabs").scrollIntoView({ block: "nearest" }); }
   else if (ds.rsort) { revSort = ds.rsort; render(); }
   else if (ds.rate) openForm(lista.find(x => x.id === ds.rate));
@@ -295,7 +308,7 @@ document.addEventListener("click", async (e) => {
     toast("Avaliação excluída"); await recarregar(selId);
   }
 });
-$("fEsp").addEventListener("change", render);
+$("fEsp").addEventListener("change", () => { if ($("fEsp").value) registrar("filtro_servico", { servico: $("fEsp").value }); render(); });
 $("fLocal").addEventListener("input", render);
 let cidadesComFornecedor = [];
 // filtro: primeiro as cidades que já têm fornecedores (com a quantidade), depois as demais do Brasil
@@ -305,7 +318,7 @@ autocomplete($("fLocal"), (q) => {
     .map(c => ({ label: c, extra: plural(lista.filter(g => g.cidade === c).length, "fornecedor", "fornecedores") }));
   const ja = new Set(daLista.map(x => norm(semUF(x.label))));
   return [...daLista, ...buscarCidades(q).filter(c => !ja.has(c.n)).map(c => ({ label: c.label }))].slice(0, 8);
-}, render);
+}, (it) => { registrar("filtro_cidade", { cidade: it.label }); render(); });
 // formulário: só cidades oficiais
 autocomplete($("iLocal"), (q) => buscarCidades(q).map(c => ({ label: c.label })));
 $("search").addEventListener("submit", (e) => { e.preventDefault(); render(); $("results").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
@@ -330,6 +343,7 @@ $("btnCopyLink").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(url); toast("Link copiado. Cole no Chrome ou Safari."); } catch { toast(url); }
 });
 async function entrarComGoogle() {
+  registrar("login_iniciado");
   // prompt=select_account: o Google sempre pergunta qual conta usar, em vez de entrar direto na última
   const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } });
   if (error) toast("Não foi possível abrir o login do Google");
@@ -449,6 +463,7 @@ $("form").addEventListener("submit", async (e) => {
     const { data: id, error } = await sb.rpc("adicionar_avaliacao", { p_nome: nome, p_telefone: tel, p_cidade: cidade, p_especialidades: esps, p_nota: nota, p_texto: texto, p_fotos: enviadas, p_declaracao: true });
     if (error) throw error;
     $("dlg").close(); toast("Avaliação publicada");
+    registrar("avaliacao_publicada", { nota, especialidades: esps.join(", "), com_fotos: enviadas.length > 0 });
     await recarregar(id); selId = id; tab = "avaliacoes"; setHash("f-" + id); render();
   } catch (x) {
     if (enviadas.length) sb.storage.from("fotos").remove(enviadas);
@@ -494,6 +509,7 @@ $("pedidoForm").addEventListener("submit", async (e) => {
   btn.disabled = false;
   if (error) { $("pErr").textContent = `Não foi possível enviar agora. Escreva para ${EMAIL_CONTATO}.`; return; }
   $("pedidoDlg").close(); toast("Pedido recebido. Respondemos em até 15 dias.");
+  registrar(tipo === "denuncia" ? "denuncia_enviada" : "pedido_profissional", { tipo });
 });
 
 /* ---------- dados ---------- */

@@ -37,19 +37,31 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 .btn:disabled { opacity: .55; cursor: default; }
 
 /* busca */
-.hero { background: var(--bg); border-bottom: 1px solid var(--line); }
-.hero .wrap { padding-block: 34px 26px; display: grid; gap: 18px; }
-.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 4.6vw, 44px); line-height: 1.05; letter-spacing: -0.02em; margin: 0; max-width: 20ch; text-wrap: balance; }
-.hero p { margin: 0; color: var(--muted); max-width: 60ch; }
-.hero-top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+/* topo: foto de obra (antes/depois) com véu escuro; título, apoio, diferenciais e busca por cima */
+.hero { position: relative; isolation: isolate; overflow: hidden; background: #16231f; color: #fff; }
+.hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 50% 55%; z-index: -2; transform: scaleX(-1); }  /* espelhada: obra sob o texto, sala pronta à direita */
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(8, 22, 18, .86) 0%, rgba(8, 22, 18, .70) 40%, rgba(8, 22, 18, .20) 72%, rgba(8, 22, 18, .05) 100%); }
+.hero-in { padding-block: 64px 36px; display: grid; gap: 26px; }
 .hero-txt { display: grid; gap: 14px; }
-.hero .eyebrow { font-weight: 700; color: var(--ink); font-size: 16px; }
-.hl1 { color: var(--brand); }
-.perks { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
-.perks li { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.perks svg { width: 22px; height: 22px; padding: 3px; border-radius: 50%; background: var(--brand); color: #fff; stroke-width: 3; }
-.hero-art { width: 100%; max-width: 100%; height: auto; display: block; }
-@media (max-width: 720px) { .hero-top { grid-template-columns: minmax(0, 1fr); gap: 8px; } .hero-art { max-height: 220px; order: -1; } }
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 5vw, 54px); line-height: 1.04; letter-spacing: -0.02em; margin: 0; max-width: 16ch; text-wrap: balance; color: #fff; }
+.hero .hl1 { color: #7fe3c9; }
+.hero .lead { margin: 0; color: rgba(255, 255, 255, .88); max-width: 52ch; font-size: 16px; }
+.perks { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.perks li { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #fff; }
+.perks svg { width: 20px; height: 20px; padding: 3px; border-radius: 50%; background: #7fe3c9; color: #0b2a23; stroke-width: 3; }
+.hero .search { box-shadow: 0 14px 40px rgba(0, 0, 0, .28); border-color: transparent; color: var(--ink); }
+.cats-bar { padding-block: 16px 0; }
+.btn .sm { display: none; }
+@media (max-width: 720px) {
+  .hero::before { background: linear-gradient(180deg, rgba(8, 22, 18, .62) 0%, rgba(8, 22, 18, .82) 55%, rgba(8, 22, 18, .9) 100%); }
+  .hero-in { padding-block: 26px 20px; gap: 18px; }
+  .hero h1 { font-size: 31px; }
+  .hero .lead { font-size: 15px; }
+  .perks { gap: 6px 14px; }
+  .perks li { font-size: 13px; }
+  .btn .lg { display: none; } .btn .sm { display: inline; }
+}
 .search { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 6px 24px rgba(15, 40, 33, .08); overflow: hidden; }
 .sf { display: grid; padding: 8px 14px; border-right: 1px solid var(--line); min-width: 0; }
 .sf label { font-size: 12px; font-weight: 700; color: var(--muted); }
@@ -242,3 +254,9 @@ img { max-width: 100%; }
 .outra-row { display: flex; gap: 8px; margin-top: 4px; }
 .outra-row input { flex: 1; min-width: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .foot a { color: var(--brand); font-weight: 600; }
+
+/* faixa de chamada no fim da lista */
+.cta-band { margin-top: 28px; padding: 20px 22px; border-radius: 12px; background: var(--brand-soft); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.cta-band div { display: grid; gap: 2px; min-width: 0; }
+.cta-band strong { font-size: 17px; }
+.cta-band span { color: var(--muted); font-size: 14px; }

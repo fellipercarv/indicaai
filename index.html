@@ -13,82 +13,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
     <a class="logo" href="./">indic<b>aí</b></a>
-    <div class="hdr-actions"><div id="authBox"></div><button class="btn primary" id="btnNew" type="button">Avaliar fornecedor</button></div>
+    <div class="hdr-actions"><div id="authBox"></div><button class="btn primary" id="btnNew" type="button"><span class="lg">Avaliar fornecedor</span><span class="sm">Avaliar</span></button></div>
   </div>
 </header>
 
 <section class="hero">
-  <div class="wrap">
-    <div class="hero-top">
-      <div class="hero-txt">
-        <p class="eyebrow">Encontrar fornecedores para sua reforma ficou muito mais fácil.</p>
-        <h1>Profissionais de obra <span class="hl1">indicados</span> por quem já <span class="hl1">contratou</span></h1>
-        <p>Notas de 1 a 5, fotos do serviço e o motivo de cada avaliação. Ache um gesseiro, encanador, marceneiro ou qualquer profissional para sua reforma na sua cidade.</p>
-        <ul class="perks">
-          <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Avaliação por quem contratou</li>
-          <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Telefone do prestador disponível</li>
-          <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Sem taxas ou intermediações</li>
-        </ul>
-      </div>
-      <svg class="hero-art" viewBox="0 0 480 320" role="img" aria-label="Ilustração de uma casa em obra, com andaime, pintor e pedreiro trabalhando">
-        <defs>
-          <pattern id="tijolo" width="28" height="14" patternUnits="userSpaceOnUse">
-            <rect width="28" height="14" fill="#c8643c"/><path d="M0 13.5h28M14 0v7M0 7h28M0 7v7M28 7v7" stroke="#e9d9c8" stroke-width="1.6"/>
-          </pattern>
-        </defs>
-        <ellipse cx="250" cy="170" rx="220" ry="140" fill="#e2f3ee"/>
-        <circle cx="400" cy="70" r="26" fill="#ffd27a"/>
-        <!-- guindaste -->
-        <path d="M70 290V40M70 40h170M70 40l40 30M90 40v-14l-20 14" stroke="#f4a51c" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M58 290V52M82 290V52" stroke="#e0951a" stroke-width="2" opacity=".6"/>
-        <path d="M220 40v58" stroke="#5f6b68" stroke-width="2"/><rect x="204" y="98" width="32" height="18" rx="2" fill="#5f6b68"/>
-        <!-- casa: paredes de tijolo, parte já rebocada/pintada -->
-        <rect x="150" y="150" width="230" height="140" fill="url(#tijolo)"/>
-        <rect x="265" y="150" width="115" height="140" fill="#f6efe4"/>
-        <rect x="265" y="150" width="56" height="140" fill="#fbf7f0"/>
-        <rect x="300" y="190" width="54" height="50" fill="#9fd3e6" stroke="#ffffff" stroke-width="5"/>
-        <rect x="185" y="215" width="44" height="75" fill="#3d4a47"/>
-        <!-- estrutura do telhado -->
-        <path d="M138 152 265 78 392 152Z" fill="none" stroke="#a8743f" stroke-width="7" stroke-linejoin="round"/>
-        <path d="M265 78v74M200 115v37M330 115v37M200 115 265 152M330 115 265 152" stroke="#a8743f" stroke-width="4"/>
-        <path d="M265 78 392 152H322L265 118Z" fill="#c4532f" opacity=".95"/>
-        <path d="M278 86l14 8M300 99l14 8M322 112l14 8M344 125l14 8" stroke="#a5401f" stroke-width="3"/>
-        <!-- andaime -->
-        <path d="M140 290V170M250 290V170M140 170h110M140 230h110M140 170l110 60M140 230l110 60" stroke="#7b8784" stroke-width="4"/>
-        <rect x="132" y="224" width="126" height="9" rx="2" fill="#a8743f"/>
-        <!-- pedreiro no andaime -->
-        <g>
-          <rect x="170" y="186" width="20" height="30" rx="5" fill="#f26b21"/>
-          <path d="M173 194h14M173 204h14" stroke="#ffe066" stroke-width="2.5"/>
-          <rect x="171" y="215" width="8" height="10" fill="#2f4858"/><rect x="181" y="215" width="8" height="10" fill="#2f4858"/>
-          <circle cx="180" cy="178" r="8" fill="#b9825a"/>
-          <path d="M170 176a10 10 0 0 1 20 0z" fill="#ffd400"/><rect x="168" y="175" width="24" height="3" rx="1.5" fill="#e6bf00"/>
-          <path d="M190 194l14 -6" stroke="#b9825a" stroke-width="5" stroke-linecap="round"/>
-          <path d="M202 184l10 6-6 6z" fill="#9aa5a2"/>
-        </g>
-        <!-- pintor na escada -->
-        <path d="M352 290 380 170M392 290 410 170M356 272h34M361 248h34M366 224h34M371 200h34M376 180h32" stroke="#5f6b68" stroke-width="4" stroke-linecap="round"/>
-        <g>
-          <rect x="374" y="168" width="20" height="30" rx="5" fill="#0d7a66"/>
-          <rect x="376" y="197" width="7" height="14" fill="#f3f3ef"/><rect x="385" y="197" width="7" height="14" fill="#f3f3ef"/>
-          <circle cx="384" cy="160" r="8" fill="#8a5a3b"/>
-          <path d="M374 158a10 10 0 0 1 20 0z" fill="#ffffff"/><rect x="372" y="157" width="24" height="3" rx="1.5" fill="#d9d9d4"/>
-          <path d="M374 176l-26 -10" stroke="#8a5a3b" stroke-width="5" stroke-linecap="round"/>
-          <path d="M348 166l-6 -20" stroke="#5f6b68" stroke-width="3"/><rect x="330" y="134" width="24" height="10" rx="3" fill="#fbf7f0" stroke="#c9c2b6" stroke-width="1.5"/>
-        </g>
-        <!-- chão e materiais -->
-        <rect x="20" y="288" width="450" height="6" rx="3" fill="#c9cfcc"/>
-        <g fill="#c8643c" stroke="#e9d9c8" stroke-width="1.4"><rect x="410" y="270" width="26" height="12"/><rect x="436" y="270" width="26" height="12"/><rect x="423" y="258" width="26" height="12"/><rect x="410" y="282" width="52" height="6"/></g>
-        <path d="M100 288l12-34h8l12 34z" fill="#f26b21"/><path d="M104 276h24" stroke="#ffffff" stroke-width="4"/>
-        <path d="M262 288v-22h26v22z" fill="#9aa5a2"/><path d="M262 266h26" stroke="#7b8784" stroke-width="3"/><path d="M266 266c0-10 18-10 18 0" fill="none" stroke="#7b8784" stroke-width="2"/>
-      </svg>
+  <img class="hero-bg" src="assets/hero-1200.webp" srcset="assets/hero-800.webp 800w, assets/hero-1200.webp 1200w, assets/hero-1920.webp 1920w" sizes="100vw" alt="" fetchpriority="high" decoding="async">
+  <div class="wrap hero-in">
+    <div class="hero-txt">
+      <h1>Profissionais de obra <span class="hl1">indicados</span> por quem já <span class="hl1">contratou</span></h1>
+      <p class="lead">Notas de 1 a 5, fotos do serviço e o motivo de cada avaliação. Ache o profissional certo para sua reforma na sua cidade.</p>
+      <ul class="perks">
+        <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Avaliação por quem contratou</li>
+        <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Telefone do prestador</li>
+        <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Sem taxas ou intermediações</li>
+      </ul>
     </div>
     <form class="search" id="search" role="search">
       <div class="sf"><label for="fEsp">Serviço</label><select id="fEsp"><option value="">Todos</option></select></div>
@@ -97,9 +43,10 @@
       <div class="sf"><label for="fTel">Telefone</label><input id="fTel" type="search" inputmode="tel" placeholder="Ex.: 99532" autocomplete="off"></div>
       <button class="go" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</button>
     </form>
-    <div class="cats" id="cats" aria-label="Especialidades"></div>
   </div>
 </section>
+
+<div class="wrap cats-bar"><div class="cats" id="cats" aria-label="Especialidades"></div></div>
 
 <main class="wrap" id="results">
   <div class="res-head">
@@ -121,6 +68,10 @@
     </div>
     <div id="rows"><div class="empty"><strong>Carregando fornecedores…</strong></div></div>
   </div>
+  <section class="cta-band" aria-label="Avaliar um profissional">
+    <div><strong>Contratou alguém recentemente?</strong><span>Sua avaliação ajuda outras pessoas a acertar na escolha. Leva 1 minuto e é anônima.</span></div>
+    <button class="btn primary" type="button" data-new>Avaliar fornecedor</button>
+  </section>
 </main>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -202,7 +153,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script src="cidades.js?v=1"></script>
-<script src="config.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="config.js?v=12"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>

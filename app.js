@@ -131,13 +131,12 @@ function render() {
   const espAll = [...new Set([...ESPECIALIDADES, ...espCount.keys()])].sort((a,b)=>a.localeCompare(b,"pt-BR"));
   fillSelect($("fEsp"), espAll, "Todos");
   cidadesComFornecedor = [...cidSet];
-  const fe = $("fEsp").value, fc = $("fCid").value, qn = norm($("fNome").value), qd = digits($("fTel").value);
+  const fe = $("fEsp").value, fc = $("fCid").value;
   const catHTML = [...espCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
     .map(([e, n]) => `<button class="cat" type="button" data-cat="${esc(e)}" aria-pressed="${e === fe}">${esc(e)} <span>${n}</span></button>`).join("");
   if ($("cats").dataset.h !== catHTML) { $("cats").innerHTML = catHTML; $("cats").dataset.h = catHTML; }
 
-  let rows = lista.filter(g => (!fe || (g.especialidades || []).includes(fe)) && cidadeBate(g.cidade, fc) &&
-    (!qn || norm(g.nome).includes(qn)) && (!qd || digits(g.telefone).includes(qd)));
+  let rows = lista.filter(g => (!fe || (g.especialidades || []).includes(fe)) && cidadeBate(g.cidade, fc));
   const m = sort.dir === "asc" ? 1 : -1;
   rows.sort((a, b) => {
     const v = sort.k === "nome" ? a.nome.localeCompare(b.nome, "pt-BR")
@@ -277,7 +276,7 @@ document.addEventListener("click", async (e) => {
   if (ds.k) { sort = { k: ds.k, dir: sort.k === ds.k ? (sort.dir === "asc" ? "desc" : "asc") : (["nome","esp"].includes(ds.k) ? "asc" : "desc") }; render(); }
   else if ("close" in ds) closeDetail();
   else if ("new" in ds) openForm();
-  else if ("clear" in ds) { ["fEsp","fCid","fNome","fTel"].forEach(id => $(id).value = ""); render(); }
+  else if ("clear" in ds) { ["fEsp","fCid"].forEach(id => $(id).value = ""); render(); }
   else if (ds.cat !== undefined) { $("fEsp").value = $("fEsp").value === ds.cat ? "" : ds.cat; render(); }
   else if (ds.tab) { tab = ds.tab; render(); $("panel").querySelector(".tabs").scrollIntoView({ block: "nearest" }); }
   else if (ds.rsort) { revSort = ds.rsort; render(); }
@@ -309,7 +308,6 @@ autocomplete($("fCid"), (q) => {
 }, render);
 // formulário: só cidades oficiais
 autocomplete($("iCid"), (q) => buscarCidades(q).map(c => ({ label: c.label })));
-["fNome","fTel"].forEach(id => $(id).addEventListener("input", render));
 $("search").addEventListener("submit", (e) => { e.preventDefault(); render(); $("results").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
 $("sortSel").addEventListener("change", () => { const [k, dir] = $("sortSel").value.split(":"); sort = { k, dir }; render(); });
 $("btnNew").addEventListener("click", () => openForm());

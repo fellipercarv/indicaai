@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -41,7 +41,7 @@
       <div class="sf"><label for="fCid">Cidade</label><input id="fCid" type="search" placeholder="Digite a cidade" autocomplete="off" spellcheck="false"></div>
       <div class="sf"><label for="fNome">Nome</label><input id="fNome" type="search" placeholder="Ex.: Zé" autocomplete="off"></div>
       <div class="sf"><label for="fTel">Telefone</label><input id="fTel" type="search" inputmode="tel" placeholder="Ex.: 99532" autocomplete="off"></div>
-      <button class="go" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</button>
+      <button class="go" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span id="goTxt">Buscar</span></button>
     </form>
   </div>
 </section>
@@ -65,6 +65,7 @@
       <span class="th">Telefone</span>
       <button data-k="aval" type="button" class="num">Avaliações</button>
       <button data-k="nota" type="button">Nota</button>
+      <span aria-hidden="true"></span>
     </div>
     <div id="rows"><div class="empty"><strong>Carregando fornecedores…</strong></div></div>
   </div>
@@ -145,6 +146,7 @@
 <footer class="foot">
   <div class="wrap">
     <a class="logo" href="./">indic<b>aí</b></a>
+    <p class="sig">A reforma começa por uma boa indicação.</p>
     <p>O Indicaí não cobra taxas e não intermedeia a contratação: você fala direto com o profissional. As avaliações são a opinião de quem contratou o serviço.</p>
     <p>Contato, pedidos de remoção e denúncias: <b>fellipe_carv@hotmail.com</b></p>
     <p><a href="privacidade.html">Política de Privacidade</a></p>
@@ -153,7 +155,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script src="cidades.js?v=1"></script>
-<script src="config.js?v=12"></script>
-<script src="app.js?v=12"></script>
+<script src="texturas.js?v=1"></script>
+<script src="config.js?v=14"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

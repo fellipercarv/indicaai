@@ -12,6 +12,7 @@ const ICON = {
   chat: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/></svg>',
   pen: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
   back: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  chev: '<svg class="i" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>',
   user: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
 };
 const $ = (id) => document.getElementById(id);
@@ -26,6 +27,11 @@ function fmtTel(t) {
   if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
   return d;
 }
+// "(19) 9••••-••••": mostra que há um número ali, sem expor o telefone inteiro
+function telMascarado(t) {
+  const d = digits(t); if (d.length < 10) return "Ver telefone";
+  return `(${d.slice(0, 2)}) ${d[2]}${d.length === 11 ? "••••" : "•••"}-••••`;
+}
 function starsHTML(v) { const p = Math.max(0, Math.min(5, v || 0)) / 5 * 100; return `<span class="stars" role="img" aria-label="${(v||0).toFixed(1)} de 5 estrelas"><i style="width:${p}%"></i></span>`; }
 const fmtNota = (v) => v ? Number(v).toFixed(1).replace(".", ",") : "–";
 const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
@@ -38,9 +44,6 @@ function quando(iso) {
   const a = Math.floor(m / 12); return a === 1 ? "há 1 ano" : `há ${a} anos`;
 }
 function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
-const COLORS = ["#0d7a66","#7a4cc2","#c2410c","#1d4ed8","#a21caf","#047857","#b45309","#be123c"];
-const colorFor = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-const initials = (n) => { const t = String(n || "?").trim(); if (/^(\p{L}\.){1,2}$/u.test(t)) return t.replace(/\./g, "").toUpperCase(); return t.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase(); };
 const ss = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 // navegadores dentro de apps (Instagram, Facebook, TikTok, LinkedIn...) não permitem login com Google
 const ua = navigator.userAgent || "";
@@ -148,6 +151,7 @@ function render() {
     b.textContent = base + (on ? (sort.dir === "asc" ? " ↑" : " ↓") : "");
   });
   const sv = sort.k + ":" + sort.dir; if ([...$("sortSel").options].some(o => o.value === sv)) $("sortSel").value = sv;
+  $("goTxt").textContent = !carregado ? "Buscar" : rows.length ? `Ver ${rows.length} ${rows.length === 1 ? "fornecedor" : "fornecedores"}` : "Nenhum resultado";
   $("count").textContent = lista.length ? `· ${rows.length}${rows.length !== lista.length ? " de " + lista.length : ""}` : "";
 
   const box = $("rows");
@@ -158,9 +162,10 @@ function render() {
     <div class="lrow item${g.id === selId ? " sel" : ""}" role="button" tabindex="0" data-id="${esc(g.id)}" aria-label="Ver ${esc(g.nome)}">
       <span class="c-n">${esc(g.nome)}</span>
       <span class="c-e" title="${esc((g.especialidades || []).join(", "))}">${esc((g.especialidades || []).join(", "))}</span>
-      <span class="c-t">${telVisto.has(g.id) ? esc(fmtTel(g.telefone)) : `<button class="reveal" type="button" data-reveal="${esc(g.id)}">${ICON.phone}Clique para ver</button>`}</span>
+      <span class="c-t">${telVisto.has(g.id) ? esc(fmtTel(g.telefone)) : `<button class="reveal" type="button" data-reveal="${esc(g.id)}" aria-label="Ver telefone de ${esc(g.nome)}"><span class="mask">${esc(telMascarado(g.telefone))}</span><b>Ver</b></button>`}</span>
       <span class="c-a">${g.aval}<span class="lbl"> ${g.aval === 1 ? "avaliação" : "avaliações"}</span></span>
       <span class="c-r"><b>${fmtNota(g.nota)}</b>${starsHTML(g.nota)}</span>
+      <span class="c-go" aria-hidden="true">${ICON.chev}</span>
     </div>`).join("");
   renderPanel();
 }
@@ -211,7 +216,7 @@ function renderPanel() {
   const max = Math.max(1, ...dist.map(d => d.c));
   const f = (revs || []).flatMap(r => r.fotos || []).map(fotoUrl);
   const esps = (g.especialidades || []).join(", ");
-  const cover = !f.length ? `<div class="ph" style="background:${colorFor(g.id)}">${esc(initials(g.nome))}</div>`
+  const cover = !f.length ? ""
     : f.length < 3 ? `<button type="button" class="solo" data-img="${esc(f[0])}"><img src="${esc(f[0])}" alt="Foto do serviço"></button>`
     : `<button type="button" data-img="${esc(f[0])}"><img src="${esc(f[0])}" alt="Foto do serviço"></button><div class="side">${f.slice(1,3).map(x => `<button type="button" data-img="${esc(x)}"><img src="${esc(x)}" alt="Foto do serviço"></button>`).join("")}</div>`;
   const summary = `<div class="summary"><div class="dist">${dist.map(d => `<div><span>${d.n}</span><span class="bar"><span style="width:${d.c / max * 100}%"></span></span></div>`).join("")}</div>
@@ -234,7 +239,7 @@ function renderPanel() {
   else body = !revs ? loading : f.length ? `<div class="grid">${f.map(x => `<button type="button" data-img="${esc(x)}"><img src="${esc(x)}" alt="Foto do serviço" loading="lazy"></button>`).join("")}</div>` : `<p class="note" style="padding-top:14px">Ninguém enviou fotos deste fornecedor ainda.</p>`;
 
   p.innerHTML = `
-    <div class="cover">${cover}<button class="x" type="button" data-close aria-label="Fechar">${ICON.back}</button></div>
+    <div class="cover${f.length ? "" : " band"}"${f.length ? "" : ` style="background-image:${esc(window.texturaDe ? texturaDe(g.especialidades) : "none")}"`}>${cover}<button class="x" type="button" data-close aria-label="Fechar">${ICON.back}</button></div>
     <div class="p-head"><h2>${esc(g.nome)}</h2>
       <div class="rline"><b>${fmtNota(g.nota)}</b>${starsHTML(g.nota)}<span class="cnt">(${g.aval})</span></div>
       <div class="meta">${esc(esps)}${g.cidade ? " · " + esc(g.cidade) : ""}</div></div>

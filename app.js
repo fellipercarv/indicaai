@@ -131,7 +131,7 @@ function render() {
   const espAll = [...new Set([...ESPECIALIDADES, ...espCount.keys()])].sort((a,b)=>a.localeCompare(b,"pt-BR"));
   fillSelect($("fEsp"), espAll, "Todos");
   cidadesComFornecedor = [...cidSet];
-  const fe = $("fEsp").value, fc = $("fCid").value;
+  const fe = $("fEsp").value, fc = $("fLocal").value;
   const catHTML = [...espCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
     .map(([e, n]) => `<button class="cat" type="button" data-cat="${esc(e)}" aria-pressed="${e === fe}">${esc(e)} <span>${n}</span></button>`).join("");
   if ($("cats").dataset.h !== catHTML) { $("cats").innerHTML = catHTML; $("cats").dataset.h = catHTML; }
@@ -276,7 +276,7 @@ document.addEventListener("click", async (e) => {
   if (ds.k) { sort = { k: ds.k, dir: sort.k === ds.k ? (sort.dir === "asc" ? "desc" : "asc") : (["nome","esp"].includes(ds.k) ? "asc" : "desc") }; render(); }
   else if ("close" in ds) closeDetail();
   else if ("new" in ds) openForm();
-  else if ("clear" in ds) { ["fEsp","fCid"].forEach(id => $(id).value = ""); render(); }
+  else if ("clear" in ds) { ["fEsp","fLocal"].forEach(id => $(id).value = ""); render(); }
   else if (ds.cat !== undefined) { $("fEsp").value = $("fEsp").value === ds.cat ? "" : ds.cat; render(); }
   else if (ds.tab) { tab = ds.tab; render(); $("panel").querySelector(".tabs").scrollIntoView({ block: "nearest" }); }
   else if (ds.rsort) { revSort = ds.rsort; render(); }
@@ -296,10 +296,10 @@ document.addEventListener("click", async (e) => {
   }
 });
 $("fEsp").addEventListener("change", render);
-$("fCid").addEventListener("input", render);
+$("fLocal").addEventListener("input", render);
 let cidadesComFornecedor = [];
 // filtro: primeiro as cidades que já têm fornecedores (com a quantidade), depois as demais do Brasil
-autocomplete($("fCid"), (q) => {
+autocomplete($("fLocal"), (q) => {
   const n = norm(semUF(q)); if (!n) return [];
   const daLista = cidadesComFornecedor.filter(c => norm(semUF(c)).includes(n))
     .map(c => ({ label: c, extra: plural(lista.filter(g => g.cidade === c).length, "fornecedor", "fornecedores") }));
@@ -307,7 +307,7 @@ autocomplete($("fCid"), (q) => {
   return [...daLista, ...buscarCidades(q).filter(c => !ja.has(c.n)).map(c => ({ label: c.label }))].slice(0, 8);
 }, render);
 // formulário: só cidades oficiais
-autocomplete($("iCid"), (q) => buscarCidades(q).map(c => ({ label: c.label })));
+autocomplete($("iLocal"), (q) => buscarCidades(q).map(c => ({ label: c.label })));
 $("search").addEventListener("submit", (e) => { e.preventDefault(); render(); $("results").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
 $("sortSel").addEventListener("change", () => { const [k, dir] = $("sortSel").value.split(":"); sort = { k, dir }; render(); });
 $("btnNew").addEventListener("click", () => openForm());
@@ -370,7 +370,7 @@ $("iNome").addEventListener("input", matchHint);
 function matchHint() {
   const f = lista.find(x => x.id === keyOf($("iNome").value, $("iTel").value));
   $("matchHint").textContent = f && digits($("iTel").value).length >= 10 ? "Esse fornecedor já está no Indicaí. Sua avaliação vai somar às dele." : "";
-  if (f && !$("iCid").value && f.cidade) $("iCid").value = f.cidade;
+  if (f && !$("iLocal").value && f.cidade) $("iLocal").value = f.cidade;
 }
 $("iFotos").addEventListener("change", () => {
   fotos = [...$("iFotos").files].filter(f => f.type.startsWith("image/")).slice(0, 5);
@@ -385,7 +385,7 @@ function openForm(f, n) {
   $("form").reset(); setNota(n || 0); fotos = []; $("previews").innerHTML = ""; $("formErr").textContent = ""; $("matchHint").textContent = "";
   espEscolhidas = new Set(); espExtras = [];
   if (f) {
-    $("iNome").value = f.nome; $("iTel").value = fmtTel(f.telefone); $("iCid").value = f.cidade || "";
+    $("iNome").value = f.nome; $("iTel").value = fmtTel(f.telefone); $("iLocal").value = f.cidade || "";
     const esps = f.especialidades || [];
     espExtras = esps.filter(e => !ESPECIALIDADES.includes(e));          // especialidades próprias do fornecedor aparecem primeiro
     if (esps.length === 1) espEscolhidas.add(esps[0]);                  // com várias, a pessoa marca o que contratou
@@ -412,7 +412,7 @@ const ERROS = {
 };
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nome = $("iNome").value.trim().replace(/\s+/g, " "), tel = digits($("iTel").value), cidadeDigitada = $("iCid").value.trim().replace(/\s+/g, " ");
+  const nome = $("iNome").value.trim().replace(/\s+/g, " "), tel = digits($("iTel").value), cidadeDigitada = $("iLocal").value.trim().replace(/\s+/g, " ");
   let cidade = cidadeDigitada;
   if ($("iOutra").value.trim()) adicionarOutra();                     // digitou e não clicou em "Adicionar"
   const esps = [...espEscolhidas];

@@ -1,4 +1,5 @@
-/* Layout: busca em destaque (estilo marketplace) + lista de cartões com foto; o fornecedor abre num painel lateral no estilo de ficha de lugar de mapa */
+/* Paleta "verde + tijolo": verde da marca, fundos cor de cal, terracota só nas ações principais.
+   Layout: busca em destaque (estilo marketplace) + lista; o fornecedor abre num painel lateral no estilo de ficha de lugar de mapa */
 :root {
   /* Rams: quatro tamanhos de texto (destaque, título, texto, legenda) */
   --fs-display: clamp(30px, 5vw, 54px);
@@ -8,28 +9,28 @@
   /* Ive: um só arredondamento para cartões, campos e botões; formas redondas para etiquetas e ícones */
   --r: 10px;
   --r-pill: 999px;
-  --brand-dark: #0a6151;
+  --brand-dark: #154f3d;
   /* ação principal (botões cheios); hoje igual à marca, mas separável */
-  --action: var(--brand);
-  --action-dark: var(--brand-dark);
-  --action-ink: var(--brand-ink);
+  --action: #b84a24;          /* tijolo: só nas ações principais */
+  --action-dark: #963a1a;
+  --action-ink: #ffffff;
   /* topo sobre a foto: destaque do título, selo dos diferenciais e véu escuro (r, g, b) */
-  --hero-accent: #7fe3c9;
-  --hero-accent-ink: #0b2a23;
-  --veil: 8, 22, 18;
+  --hero-accent: #b6e3a8;
+  --hero-accent-ink: #10291c;
+  --veil: 20, 22, 17;
   --bg: #ffffff;
-  --soft: #f6f7f7;
+  --soft: #f6f3ee;
   --surface: #ffffff;
-  --ink: #1b2422;
-  --muted: #5f6b68;
-  --line: #e1e7e5;
-  --brand: #0d7a66;
+  --ink: #1f2320;
+  --muted: #625f57;
+  --line: #e6e0d6;
+  --brand: #1d6a52;
   --brand-ink: #ffffff;
-  --brand-soft: #e2f3ee;
-  --star: #f4a51c;
-  --star-off: #d5dbd9;
+  --brand-soft: #e7efe7;
+  --star: #f2a20c;
+  --star-off: #ddd6ca;
   --danger: #b3261e;
-  --scrim: rgba(12, 22, 19, .45);
+  --scrim: rgba(20, 22, 17, .45);
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
@@ -112,7 +113,6 @@ main { padding-block: 22px 70px; }
 .reveal svg.i { width: 16px; height: 16px; }
 
 .item:hover { background: var(--soft); }
-.item:hover .c-n { color: var(--brand); }
 .item.sel { background: var(--brand-soft); }
 .c-n { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .c-t, .c-a { font-variant-numeric: tabular-nums; color: var(--muted); }

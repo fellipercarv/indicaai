@@ -50,7 +50,7 @@
     ar: svg(120, 40,
       `<g fill='none' stroke='#a9d3e2' stroke-width='2.5' stroke-linecap='round'><path d='M0 12 C20 2 40 22 60 12 S100 2 120 12'/><path d='M0 30 C20 20 40 40 60 30 S100 20 120 30'/></g>`, '#eaf5f9'),
     padrao: svg(48, 48,
-      `<path d='M24 14l2.9 6 6.6.9-4.8 4.6 1.2 6.5L24 28.9 18.1 32l1.2-6.5-4.8-4.6 6.6-.9z' fill='#ffffff' opacity='.14'/>`, '#0d7a66')
+      `<path d='M24 14l2.9 6 6.6.9-4.8 4.6 1.2 6.5L24 28.9 18.1 32l1.2-6.5-4.8-4.6 6.6-.9z' fill='#ffffff' opacity='.14'/>`, '#1d6a52')
   };
 
   const REGRAS = [
